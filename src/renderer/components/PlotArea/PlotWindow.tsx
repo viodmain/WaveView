@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { useWaveStore } from '../../stores/waveStore';
 import { useFileStore } from '../../stores/fileStore';
@@ -28,10 +28,11 @@ const X_UNIT_LABELS: Record<string, string> = {
 };
 
 const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
-  const { windows } = useWaveStore();
+  const { windows, sharedXRange, syncEnabled, updateSharedXRange } = useWaveStore();
   const { files } = useFileStore();
   const { zoomMode, resetCounter } = useSettingsStore();
   const plotRef = useRef<HTMLDivElement>(null);
+  const isSyncUpdate = useRef(false); // Flag to prevent feedback loop
 
   const window = windows.find((w) => w.id === windowId);
 
@@ -94,7 +95,6 @@ const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
   // Reset axes when resetCounter changes
   const handleReset = useCallback(() => {
     if (!plotRef.current) return;
-    // Use Plotly relayout to reset axes to autorange
     const update: Record<string, any> = {
       'xaxis.autorange': true,
       'yaxis.autorange': true,
@@ -102,18 +102,47 @@ const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
     if (useRightAxis) {
       update['yaxis2.autorange'] = true;
     }
-    // Access Plotly from the global scope (it's bundled with plotly.js-dist-min)
     const Plotly = (window as any).Plotly;
     if (Plotly && plotRef.current) {
       Plotly.relayout(plotRef.current, update);
     }
-  }, [useRightAxis]);
+    // Clear shared range on reset
+    if (syncEnabled) {
+      updateSharedXRange(null);
+    }
+  }, [useRightAxis, syncEnabled, updateSharedXRange]);
 
   useEffect(() => {
     if (resetCounter > 0) {
       handleReset();
     }
   }, [resetCounter, handleReset]);
+
+  // Handle user zoom/pan - update shared range
+  const handleRelayout = useCallback(
+    (event: any) => {
+      if (!syncEnabled) return;
+      if (isSyncUpdate.current) {
+        isSyncUpdate.current = false;
+        return;
+      }
+      // Extract x-axis range from relayout event
+      const xMin = event['xaxis.range[0]'] ?? event['xaxis.range']?.[0];
+      const xMax = event['xaxis.range[1]'] ?? event['xaxis.range']?.[1];
+      if (xMin !== undefined && xMax !== undefined) {
+        updateSharedXRange({ min: xMin, max: xMax });
+      } else if (event['xaxis.autorange']) {
+        updateSharedXRange(null);
+      }
+    },
+    [syncEnabled, updateSharedXRange]
+  );
+
+  // Apply shared range to layout when it changes from another window
+  const appliedXRange = useMemo(() => {
+    if (!syncEnabled || !sharedXRange) return undefined;
+    return [sharedXRange.min, sharedXRange.max];
+  }, [syncEnabled, sharedXRange]);
 
   if (!window) return null;
 
@@ -132,6 +161,8 @@ const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
     xaxis: {
       title: axisLabels.x,
       showgrid: true,
+      range: appliedXRange,
+      autorange: appliedXRange ? false : true,
     },
     yaxis: {
       title: axisLabels.y,
@@ -167,6 +198,7 @@ const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
           displaylogo: false,
           modeBarButtonsToRemove: ['lasso2d', 'select2d'],
         }}
+        onRelayout={handleRelayout}
         useResizeHandler
         style={{ width: '100%', height: '100%' }}
       />

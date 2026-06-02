@@ -14,7 +14,7 @@ import { parseFile } from '../../parsers/parserFactory';
 
 const Workbench: React.FC = () => {
   const { addFile } = useFileStore();
-  const { addWindow } = useWaveStore();
+  const { addWindow, syncEnabled, setSyncEnabled } = useWaveStore();
   const { theme, fontSize, zoomMode, setTheme, setFontSize, setZoomMode, triggerReset } = useSettingsStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -109,6 +109,13 @@ const Workbench: React.FC = () => {
               value={fontSize}
               onChange={setFontSize}
               style={{ marginTop: 8 }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>X-Axis Sync Across Windows</span>
+            <Switch
+              checked={syncEnabled}
+              onChange={setSyncEnabled}
             />
           </div>
         </div>
