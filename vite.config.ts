@@ -18,4 +18,9 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  // react-plotly.js uses require("prop-types") internally which fails in ESM bundles
+  // Define a shim so it resolves correctly
+  define: {
+    'require': 'undefined',
+  },
 })
