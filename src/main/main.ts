@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { createMenu } from './menu';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -17,6 +18,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+
+  // Create application menu
+  createMenu(mainWindow);
 
   // In development, load from Vite dev server
   if (process.env.NODE_ENV === 'development') {
