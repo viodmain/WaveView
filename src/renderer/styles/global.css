@@ -6,6 +6,8 @@
   --text-primary: #000;
   --text-secondary: #666;
   --text-muted: #999;
+  --resizer-color: #d9d9d9;
+  --resizer-hover: #1890ff;
 }
 
 [data-theme='dark'] {
@@ -16,6 +18,8 @@
   --text-primary: #e8e8e8;
   --text-secondary: #a0a0a0;
   --text-muted: #595959;
+  --resizer-color: #424242;
+  --resizer-hover: #177ddc;
 }
 
 * {
@@ -44,7 +48,6 @@ body {
 }
 
 .main-content {
-  display: flex;
   flex: 1;
   overflow: hidden;
 }
@@ -60,11 +63,11 @@ body {
 
 /* File Tree */
 .file-tree {
-  width: 250px;
-  min-width: 200px;
-  border-right: 1px solid var(--border-color);
+  height: 100%;
   background: var(--bg-primary);
   overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .file-tree-header {
@@ -73,6 +76,7 @@ body {
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-tertiary);
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .file-tree-empty {
@@ -87,6 +91,8 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  height: 100%;
+  overflow: hidden;
 }
 
 .plot-area-empty {
@@ -123,4 +129,43 @@ body {
 .plot-window-empty + div,
 .js-plotly-plot {
   background: var(--bg-primary) !important;
+}
+
+/* SplitPane resizer */
+.SplitPane .Resizer {
+  background: var(--resizer-color);
+  opacity: 0.8;
+  z-index: 1;
+  box-sizing: border-box;
+  background-clip: padding-box;
+  flex-shrink: 0;
+}
+
+.SplitPane .Resizer:hover {
+  transition: all 0.2s ease;
+  opacity: 1;
+  background: var(--resizer-hover);
+}
+
+.SplitPane .Resizer.vertical {
+  width: 5px;
+  margin: 0 -2px;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  cursor: col-resize;
+}
+
+.SplitPane .Resizer.vertical:hover {
+  border-left: 2px solid var(--resizer-hover);
+  border-right: 2px solid var(--resizer-hover);
+}
+
+.SplitPane .Resizer.disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.SplitPane .Resizer.disabled:hover {
+  background: var(--resizer-color);
+  border-color: transparent;
 }

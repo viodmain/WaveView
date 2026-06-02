@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ConfigProvider, theme } from 'antd';
+import SplitPane from 'react-split-pane';
 import { useSettingsStore } from './stores/settingsStore';
 import Workbench from './components/Workbench/Workbench';
 import FileTree from './components/FileTree/FileTree';
@@ -26,8 +27,16 @@ const App: React.FC = () => {
       <div className="app-container">
         <Workbench />
         <div className="main-content">
-          <FileTree />
-          <PlotArea />
+          <SplitPane
+            split="vertical"
+            minSize={150}
+            defaultSize={250}
+            style={{ position: 'relative' }}
+            paneStyle={{ display: 'flex', flexDirection: 'column' }}
+          >
+            <FileTree />
+            <PlotArea />
+          </SplitPane>
         </div>
       </div>
     </ConfigProvider>

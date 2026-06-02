@@ -12,7 +12,11 @@
     "build:electron": "tsc -p tsconfig.main.json",
     "preview": "vite preview"
   },
-  "keywords": ["waveform", "spice", "viewer"],
+  "keywords": [
+    "waveform",
+    "spice",
+    "viewer"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -37,6 +41,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-plotly.js": "^2.6.0",
+    "react-split-pane": "^2.0.3",
     "zustand": "^4.0.0"
   },
   "build": {
