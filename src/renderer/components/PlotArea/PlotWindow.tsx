@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import Plot from 'react-plotly.js';
 import { useWaveStore } from '../../stores/waveStore';
 import { useFileStore } from '../../stores/fileStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { downsampleIfNeeded } from '../../utils/downsample';
 import { WaveformData } from '../../../shared/types';
 
 interface PlotWindowProps {
@@ -65,12 +66,13 @@ const PlotWindow: React.FC<PlotWindowProps> = ({ windowId }) => {
     const leftYUnit = yUnitArray[0];
     const rightYUnit = yUnitArray[1] || null;
 
-    // Build Plotly traces
+    // Build Plotly traces with downsampling for large datasets
     const traces = resolvedWaves.map(({ filename, waveName, wave }) => {
       const isRightAxis = hasDualYAxis && wave.unit.y === rightYUnit;
+      const { xData, yData } = downsampleIfNeeded(wave.xData, wave.yData);
       return {
-        x: wave.xData,
-        y: wave.yData,
+        x: xData,
+        y: yData,
         type: 'scatter' as const,
         mode: 'lines' as const,
         name: `${filename}:${waveName}`,
