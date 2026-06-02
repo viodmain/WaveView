@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, memo } from 'react';
-import Plotly from 'plotly.js-dist-min';
+
+// Use Plotly loaded via script tag (see index.html)
+declare const Plotly: any;
 
 interface PlotWrapperProps {
-  data: Plotly.Data[];
-  layout?: Partial<Plotly.Layout>;
-  config?: Partial<Plotly.Config>;
+  data: any[];
+  layout?: Record<string, any>;
+  config?: Record<string, any>;
   onRelayout?: (event: any) => void;
   useResizeHandler?: boolean;
   style?: React.CSSProperties;
@@ -27,23 +29,27 @@ const PlotWrapper: React.FC<PlotWrapperProps> = memo(({
 
   // Create or update plot
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || typeof Plotly === 'undefined') return;
 
     const init = async () => {
       if (!containerRef.current) return;
 
-      if (hasPlot.current) {
-        await Plotly.react(containerRef.current, data, layout, config);
-      } else {
-        await Plotly.newPlot(containerRef.current, data, layout, config);
-        hasPlot.current = true;
-      }
+      try {
+        if (hasPlot.current) {
+          await Plotly.react(containerRef.current, data, layout, config);
+        } else {
+          await Plotly.newPlot(containerRef.current, data, layout, config);
+          hasPlot.current = true;
+        }
 
-      // Attach relayout listener
-      if (onRelayout && containerRef.current) {
-        const el = containerRef.current as any;
-        el.removeAllListeners?.('plotly_relayout');
-        el.on('plotly_relayout', onRelayout);
+        // Attach relayout listener
+        if (onRelayout && containerRef.current) {
+          const el = containerRef.current as any;
+          el.removeAllListeners?.('plotly_relayout');
+          el.on('plotly_relayout', onRelayout);
+        }
+      } catch (err) {
+        console.error('Plotly error:', err);
       }
     };
 
@@ -52,7 +58,7 @@ const PlotWrapper: React.FC<PlotWrapperProps> = memo(({
 
   // Handle reset
   useEffect(() => {
-    if (resetCounter > 0 && containerRef.current && hasPlot.current && resetUpdate) {
+    if (resetCounter > 0 && containerRef.current && hasPlot.current && resetUpdate && typeof Plotly !== 'undefined') {
       Plotly.relayout(containerRef.current, resetUpdate);
     }
   }, [resetCounter, resetUpdate]);
@@ -62,7 +68,7 @@ const PlotWrapper: React.FC<PlotWrapperProps> = memo(({
     if (!useResizeHandler || !containerRef.current) return;
 
     const observer = new ResizeObserver(() => {
-      if (containerRef.current && hasPlot.current) {
+      if (containerRef.current && hasPlot.current && typeof Plotly !== 'undefined') {
         Plotly.Plots.resize(containerRef.current);
       }
     });
@@ -74,7 +80,7 @@ const PlotWrapper: React.FC<PlotWrapperProps> = memo(({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (containerRef.current && hasPlot.current) {
+      if (containerRef.current && hasPlot.current && typeof Plotly !== 'undefined') {
         Plotly.purge(containerRef.current);
         hasPlot.current = false;
       }
