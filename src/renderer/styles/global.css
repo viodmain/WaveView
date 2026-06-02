@@ -1,3 +1,23 @@
+:root {
+  --bg-primary: #fff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #fafafa;
+  --border-color: #d9d9d9;
+  --text-primary: #000;
+  --text-secondary: #666;
+  --text-muted: #999;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #141414;
+  --bg-secondary: #1f1f1f;
+  --bg-tertiary: #262626;
+  --border-color: #424242;
+  --text-primary: #e8e8e8;
+  --text-secondary: #a0a0a0;
+  --text-muted: #595959;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,6 +28,12 @@ html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
 }
 
 .app-container {
@@ -28,24 +54,31 @@ html, body, #root {
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #d9d9d9;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* File Tree */
 .file-tree {
   width: 250px;
   min-width: 200px;
-  border-right: 1px solid #d9d9d9;
-  background: #fff;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-primary);
   overflow: auto;
 }
 
 .file-tree-header {
   padding: 12px 16px;
   font-weight: 600;
-  border-bottom: 1px solid #d9d9d9;
-  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.file-tree-empty {
+  padding: 16px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 /* Plot Area */
@@ -53,7 +86,7 @@ html, body, #root {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--bg-primary);
 }
 
 .plot-area-empty {
@@ -61,7 +94,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .plot-window-empty {
@@ -70,7 +103,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* Ant Design Tabs customization */
@@ -84,4 +117,10 @@ html, body, #root {
 
 .plot-area .ant-tabs-tabpane {
   height: 100%;
+}
+
+/* Plotly chart container */
+.plot-window-empty + div,
+.js-plotly-plot {
+  background: var(--bg-primary) !important;
 }

@@ -29,7 +29,7 @@ const PlotArea: React.FC = () => {
         onChange={setActiveWindow}
         onEdit={(targetKey, action) => {
           if (action === 'remove') {
-            removeWindow(targetKey as string);
+            removeWindow(String(targetKey));
           }
         }}
         items={items}

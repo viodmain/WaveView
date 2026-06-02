@@ -4,6 +4,9 @@ import fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 
+// Max file size: 500MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -45,7 +48,9 @@ app.on('activate', () => {
 
 // IPC Handlers
 ipcMain.handle('dialog:openFile', async () => {
-  const result = await dialog.showOpenDialog(mainWindow!, {
+  if (!mainWindow) return null;
+
+  const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'SPICE Files', extensions: ['tr0', 'tr1', 'tr2', 'ac0', 'ac1', 's1p', 's2p', 's3p', 's4p'] },
@@ -57,9 +62,13 @@ ipcMain.handle('dialog:openFile', async () => {
     return null;
   }
 
-  // Read file contents
+  // Read file contents with size check
   const files = await Promise.all(
     result.filePaths.map(async (filePath) => {
+      const stat = await fs.promises.stat(filePath);
+      if (stat.size > MAX_FILE_SIZE) {
+        throw new Error(`File ${path.basename(filePath)} is too large (${Math.round(stat.size / 1024 / 1024)}MB, max ${MAX_FILE_SIZE / 1024 / 1024}MB)`);
+      }
       const content = await fs.promises.readFile(filePath, 'utf-8');
       return {
         path: filePath,

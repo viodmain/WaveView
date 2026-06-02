@@ -8,6 +8,7 @@ interface WaveStore {
   removeWindow: (id: string) => void;
   setActiveWindow: (id: string) => void;
   toggleWave: (windowId: string, filename: string, waveName: string) => void;
+  clearWaves: (windowId: string) => void;
 }
 
 let windowCounter = 0;
@@ -59,4 +60,11 @@ export const useWaveStore = create<WaveStore>((set) => ({
       });
       return { windows: newWindows };
     }),
+  clearWaves: (windowId) =>
+    set((state) => ({
+      windows: state.windows.map((w) => {
+        if (w.id !== windowId) return w;
+        return { ...w, waves: [] };
+      }),
+    })),
 }));

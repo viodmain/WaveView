@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ConfigProvider, theme } from 'antd';
 import { useSettingsStore } from './stores/settingsStore';
 import Workbench from './components/Workbench/Workbench';
@@ -6,12 +6,21 @@ import FileTree from './components/FileTree/FileTree';
 import PlotArea from './components/PlotArea/PlotArea';
 
 const App: React.FC = () => {
-  const { theme: appTheme } = useSettingsStore();
+  const { theme: appTheme, fontSize } = useSettingsStore();
+
+  // Apply theme and font size to the document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', appTheme);
+    document.documentElement.style.fontSize = `${fontSize}px`;
+  }, [appTheme, fontSize]);
 
   return (
     <ConfigProvider
       theme={{
         algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          fontSize: fontSize,
+        },
       }}
     >
       <div className="app-container">
