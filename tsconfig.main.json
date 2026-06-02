@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "outDir": "./dist/main",
+    "outDir": "./dist",
     "rootDir": "./src"
   },
   "include": ["src/main/**/*", "src/shared/**/*"]
