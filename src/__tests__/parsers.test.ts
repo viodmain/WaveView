@@ -13,32 +13,64 @@ function readExample(relativePath: string): string {
 }
 
 describe('trParser', () => {
-  const content = readExample('瞬态/rmin2_modify_2_pathadapt_sine.tr0');
-  const result = parseTrFile('rmin2_modify_2_pathadapt_sine.tr0', content);
+  describe('old format (no-space scientific notation)', () => {
+    const content = readExample('瞬态/rmin2_modify_2_pathadapt_sine.tr0');
+    const result = parseTrFile('rmin2_modify_2_pathadapt_sine.tr0', content);
 
-  it('should parse filename', () => {
-    expect(result.filename).toBe('rmin2_modify_2_pathadapt_sine.tr0');
+    it('should parse filename', () => {
+      expect(result.filename).toBe('rmin2_modify_2_pathadapt_sine.tr0');
+    });
+
+    it('should extract column names', () => {
+      expect(result.waveforms.length).toBeGreaterThan(0);
+      const names = result.waveforms.map((w) => w.name);
+      expect(names).toContain('u5_10');
+      expect(names).toContain('u6_16');
+    });
+
+    it('should parse numeric data', () => {
+      for (const wave of result.waveforms) {
+        expect(wave.xData.length).toBeGreaterThan(0);
+        expect(wave.yData.length).toBe(wave.xData.length);
+        expect(wave.xData.every((v) => isFinite(v))).toBe(true);
+        expect(wave.yData.every((v) => isFinite(v))).toBe(true);
+      }
+    });
+
+    it('should have TIME as x-axis unit', () => {
+      expect(result.metadata.analysis).toBe('TRAN');
+      expect(result.waveforms[0].unit.x).toBe('s');
+    });
   });
 
-  it('should extract column names', () => {
-    expect(result.waveforms.length).toBeGreaterThan(0);
-    const names = result.waveforms.map((w) => w.name);
-    expect(names).toContain('u5_10');
-    expect(names).toContain('u6_16');
-  });
+  describe('new format (#H/#N/#C format)', () => {
+    const content = readExample('瞬态/sin.tr0');
+    const result = parseTrFile('sin.tr0', content);
 
-  it('should parse numeric data', () => {
-    for (const wave of result.waveforms) {
-      expect(wave.xData.length).toBeGreaterThan(0);
-      expect(wave.yData.length).toBe(wave.xData.length);
-      expect(wave.xData.every((v) => isFinite(v))).toBe(true);
-      expect(wave.yData.every((v) => isFinite(v))).toBe(true);
-    }
-  });
+    it('should parse filename', () => {
+      expect(result.filename).toBe('sin.tr0');
+    });
 
-  it('should have TIME as x-axis unit', () => {
-    expect(result.metadata.analysis).toBe('TRAN');
-    expect(result.waveforms[0].unit.x).toBe('s');
+    it('should extract node names', () => {
+      expect(result.waveforms.length).toBe(2);
+      const names = result.waveforms.map((w) => w.name);
+      expect(names).toContain('v(nnn15681)');
+      expect(names).toContain('v(nnn15528)');
+    });
+
+    it('should parse numeric data', () => {
+      for (const wave of result.waveforms) {
+        expect(wave.xData.length).toBeGreaterThan(0);
+        expect(wave.yData.length).toBe(wave.xData.length);
+        expect(wave.xData.every((v) => isFinite(v))).toBe(true);
+        expect(wave.yData.every((v) => isFinite(v))).toBe(true);
+      }
+    });
+
+    it('should have TIME as x-axis unit', () => {
+      expect(result.metadata.analysis).toBe('TRAN');
+      expect(result.waveforms[0].unit.x).toBe('s');
+    });
   });
 });
 

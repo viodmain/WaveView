@@ -3,18 +3,113 @@ import type { ParsedFile, WaveformData } from '../../shared/types';
 /**
  * 解析 SPICE tr0 瞬态分析文件
  *
- * 格式：
- *  行1-5: 仿真厂商信息（无重要信息）
- *  数据数量记录: 几个1就有几组数据，与列名数量一致
+ * 支持两种格式：
+ *
+ * 格式1（旧格式）：
+ *  行1-5: 仿真厂商信息
  *  列名行: 波形名称，第一个为X轴（通常为TIME），$&%# 为结束符
  *  数据行: 无空格分隔的科学计数法，用正负号分割
- *  数据结束: 0.10000E+31 为结束符，不计入数据
+ *  数据结束: 0.10000E+31 为结束符
  *
- * 重要：数据可能跨行分布，不能按行匹配。正确方式：
- *  1. 先切分所有数据为一个数组
- *  2. 按顺序每 N 个一组（N = 列数），分别存入各波形
+ * 格式2（新格式，与 ac0 类似）：
+ *  #H - 头信息块
+ *  #N - 节点名称列表
+ *  #C - 数据块：时间 节点数 值1 值2 ...
+ *  #; - 结束符
  */
 export function parseTrFile(filename: string, content: string): ParsedFile {
+  // 检测格式：是否包含 #H 或 #N 或 #C
+  if (/^#[HNC]/m.test(content)) {
+    return parseTrNewFormat(filename, content);
+  }
+  return parseTrOldFormat(filename, content);
+}
+
+/**
+ * 解析新格式 tr0（#H/#N/#C 格式，与 ac0 类似但数据为实数）
+ */
+function parseTrNewFormat(filename: string, content: string): ParsedFile {
+  const lines = content.split(/\r?\n/);
+
+  let nodeNames: string[] = [];
+  const frequencies: number[] = [];
+  const allValues: number[][] = []; // [freqIdx][nodeIdx]
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+
+    if (line.startsWith('#N')) {
+      // 解析节点名
+      let nameBlock = line.substring(2);
+      while (i + 1 < lines.length && !lines[i + 1].trim().startsWith('#')) {
+        i++;
+        nameBlock += ' ' + lines[i].trim();
+      }
+      const matches = nameBlock.match(/'([^']+)'/g);
+      if (matches) {
+        nodeNames = matches.map((m) => m.replace(/'/g, ''));
+      }
+    } else if (line.startsWith('#C')) {
+      // 解析数据块
+      let dataBlock = line.substring(2);
+      while (i + 1 < lines.length && !lines[i + 1].trim().startsWith('#')) {
+        i++;
+        dataBlock += ' ' + lines[i].trim();
+      }
+
+      const tokens = dataBlock.trim().split(/\s+/);
+      if (tokens.length < 2) {
+        i++;
+        continue;
+      }
+
+      const time = parseFloat(tokens[0]);
+      const numNodes = parseInt(tokens[1], 10);
+      frequencies.push(time);
+
+      const nodeData: number[] = [];
+      for (let n = 0; n < numNodes; n++) {
+        const val = parseFloat(tokens[2 + n] || '0');
+        nodeData.push(val);
+      }
+      allValues.push(nodeData);
+    } else if (line.startsWith('#;')) {
+      break;
+    }
+
+    i++;
+  }
+
+  // 构建波形数据
+  const waveforms: WaveformData[] = [];
+  const xData = frequencies;
+
+  for (let n = 0; n < nodeNames.length; n++) {
+    const yData: number[] = [];
+    for (let f = 0; f < allValues.length; f++) {
+      yData.push(allValues[f]?.[n] ?? 0);
+    }
+
+    waveforms.push({
+      name: nodeNames[n],
+      xData,
+      yData,
+      unit: { x: 's', y: 'V' },
+    });
+  }
+
+  return {
+    filename,
+    waveforms,
+    metadata: { analysis: 'TRAN', format: 'new', nodeNames },
+  };
+}
+
+/**
+ * 解析旧格式 tr0（无空格科学计数法）
+ */
+function parseTrOldFormat(filename: string, content: string): ParsedFile {
   const lines = content.split(/\r?\n/);
 
   // 跳过开头的空行和厂商信息，找到列名行
@@ -90,6 +185,6 @@ export function parseTrFile(filename: string, content: string): ParsedFile {
   return {
     filename,
     waveforms,
-    metadata: { analysis: 'TRAN', colNames },
+    metadata: { analysis: 'TRAN', format: 'old', colNames },
   };
 }
