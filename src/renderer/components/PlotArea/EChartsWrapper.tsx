@@ -162,6 +162,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           zoomOnMouseWheel: 'ctrl',    // Ctrl + 滚轮：只缩放 X 轴
           moveOnMouseMove: false,
           preventDefaultMouseMove: true,
+          filterMode: 'none',          // 不过滤数据点，保留完整波形
         },
         {
           type: 'inside',
@@ -169,6 +170,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           zoomOnMouseWheel: 'shift',   // Shift + 滚轮：只缩放 Y 轴
           moveOnMouseMove: false,
           preventDefaultMouseMove: true,
+          filterMode: 'none',          // 不过滤数据点，保留完整波形
         },
       ],
       series: series.map((s) => ({
