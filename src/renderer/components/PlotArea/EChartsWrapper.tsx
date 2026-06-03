@@ -1,4 +1,4 @@
-import { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import {
@@ -34,7 +34,6 @@ function scientificNotation(value: number): string {
   if (value === 0) return '0';
   const exp = Math.floor(Math.log10(Math.abs(value)));
   const mantissa = value / Math.pow(10, exp);
-  // 如果指数较小，直接显示数字
   if (Math.abs(exp) < 3) return value.toPrecision(4);
   return `${mantissa.toFixed(2)}e${exp}`;
 }
@@ -42,12 +41,14 @@ function scientificNotation(value: number): string {
 const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series, style }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
+  const [isZoomMode, setIsZoomMode] = useState(false);
 
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
     resetZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
+      // 重置两个 dataZoom
       chart.dispatchAction({
         type: 'dataZoom',
         dataZoomIndex: 0,
@@ -60,10 +61,17 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         start: 0,
         end: 100,
       });
+      // 退出框选模式
+      setIsZoomMode(false);
+      chart.dispatchAction({
+        type: 'restore',
+      });
     },
     startDataZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
+      setIsZoomMode(true);
+      // 激活 toolbox 的 dataZoom 选框模式
       chart.dispatchAction({
         type: 'takeGlobalCursor',
         key: 'dataZoomSelect',
@@ -106,7 +114,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
 
       if (e.ctrlKey) {
-        // Ctrl + 滚轮：只缩放 X 轴
         e.preventDefault();
         const option = chart.getOption() as any;
         const xZoom = option.dataZoom?.[0];
@@ -126,7 +133,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           });
         }
       } else if (e.shiftKey) {
-        // Shift + 滚轮：只缩放 Y 轴
         e.preventDefault();
         const option = chart.getOption() as any;
         const yZoom = option.dataZoom?.[1];
@@ -146,7 +152,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           });
         }
       }
-      // 普通滚轮缩放由 ECharts 内置的 inside dataZoom 处理
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
@@ -185,12 +190,20 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         textStyle: { color: '#ccc' },
       },
       toolbox: {
-        show: false,
+        show: true,
+        right: 20,
+        top: 8,
         feature: {
           dataZoom: {
             yAxisIndex: 'none',
+            title: {
+              zoom: '框选放大',
+              back: '还原',
+            },
           },
-          restore: {},
+          restore: {
+            title: '还原',
+          },
         },
       },
       grid: {
@@ -220,8 +233,8 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         splitLine: { lineStyle: { color: '#333' } },
       },
       dataZoom: [
-        { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
-        { type: 'inside', yAxisIndex: 0, filterMode: 'none' },
+        { type: 'inside', xAxisIndex: 0 },
+        { type: 'inside', yAxisIndex: 0 },
       ],
       series: series.map((s) => ({
         name: s.name,
@@ -233,7 +246,16 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     };
 
     chart.setOption(option, true);
-  }, [series]);
+
+    // 如果是框选模式，重新激活
+    if (isZoomMode) {
+      chart.dispatchAction({
+        type: 'takeGlobalCursor',
+        key: 'dataZoomSelect',
+        dataZoomSelectActive: true,
+      });
+    }
+  }, [series, isZoomMode]);
 
   return (
     <div
