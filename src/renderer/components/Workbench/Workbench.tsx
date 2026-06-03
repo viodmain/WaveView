@@ -9,10 +9,11 @@ import {
 
 interface WorkbenchProps {
   onOpenFile?: () => void;
+  onZoom?: () => void;
   onReset?: () => void;
 }
 
-export default function Workbench({ onOpenFile, onReset }: WorkbenchProps) {
+export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProps) {
   const [messageApi, contextHolder] = message.useMessage();
 
   const handleClick = (label: string) => {
@@ -42,12 +43,12 @@ export default function Workbench({ onOpenFile, onReset }: WorkbenchProps) {
             onClick={onOpenFile}
           />
         </Tooltip>
-        <Tooltip title="Zoom">
+        <Tooltip title="Zoom (框选放大)">
           <Button
             type="text"
             size="small"
             icon={<DragOutlined />}
-            onClick={() => handleClick('Zoom')}
+            onClick={onZoom}
           />
         </Tooltip>
         <Tooltip title="Reset">
@@ -77,7 +78,7 @@ export default function Workbench({ onOpenFile, onReset }: WorkbenchProps) {
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.8
+        WaveView v1.0.9
       </span>
     </div>
   );

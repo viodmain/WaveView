@@ -6,10 +6,11 @@ import {
   TooltipComponent,
   DataZoomComponent,
   LegendComponent,
+  ToolboxComponent,
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
-echarts.use([LineChart, GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, CanvasRenderer]);
+echarts.use([LineChart, GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, ToolboxComponent, CanvasRenderer]);
 
 export interface SeriesData {
   name: string;
@@ -20,7 +21,7 @@ export interface SeriesData {
 
 export interface EChartsHandle {
   resetZoom: () => void;
-  setZoomMode: (enabled: boolean) => void;
+  startDataZoom: () => void;
 }
 
 interface EChartsWrapperProps {
@@ -43,14 +44,14 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         end: 100,
       });
     },
-    setZoomMode: (enabled: boolean) => {
+    startDataZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
-      chart.setOption({
-        dataZoom: [
-          { type: enabled ? 'inside' : 'inside', xAxisIndex: 0 },
-          { type: enabled ? 'inside' : 'inside', yAxisIndex: 0 },
-        ],
+      // 触发 toolbox 的 dataZoom 选框模式
+      chart.dispatchAction({
+        type: 'takeGlobalCursor',
+        key: 'dataZoomSelect',
+        dataZoomSelectActive: true,
       });
     },
   }));
@@ -90,6 +91,15 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       legend: {
         top: 8,
         textStyle: { color: '#ccc' },
+      },
+      toolbox: {
+        show: false,
+        feature: {
+          dataZoom: {
+            yAxisIndex: 'none',
+          },
+          restore: {},
+        },
       },
       grid: {
         left: 60,

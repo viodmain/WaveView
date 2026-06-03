@@ -64,6 +64,11 @@ export default function App() {
     }
   }, [addFile, messageApi]);
 
+  const handleZoom = useCallback(() => {
+    chartRef.current?.startDataZoom();
+    messageApi.info('框选放大模式已启用，请在图表上拖动选择区域');
+  }, [messageApi]);
+
   const handleResetZoom = useCallback(() => {
     chartRef.current?.resetZoom();
     messageApi.info('视图已重置');
@@ -94,7 +99,7 @@ export default function App() {
     >
       {contextHolder}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <Workbench onOpenFile={handleOpenFile} onReset={handleResetZoom} />
+        <Workbench onOpenFile={handleOpenFile} onZoom={handleZoom} onReset={handleResetZoom} />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ width: sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
             <FileTree />
