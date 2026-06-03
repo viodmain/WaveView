@@ -5,11 +5,10 @@ import { useFileStore } from '../../stores/fileStore';
 import { useWaveStore } from '../../stores/waveStore';
 
 interface PlotAreaProps {
-  onResetZoom?: () => void;
   onChartRef?: (ref: EChartsHandle | null) => void;
 }
 
-export default function PlotArea({ onResetZoom, onChartRef }: PlotAreaProps) {
+export default function PlotArea({ onChartRef }: PlotAreaProps) {
   const chartRef = useRef<EChartsHandle>(null);
   const files = useFileStore((s) => s.files);
   const selectedWaves = useWaveStore((s) => s.selectedWaves);
@@ -39,6 +38,12 @@ export default function PlotArea({ onResetZoom, onChartRef }: PlotAreaProps) {
     return allSeries;
   }, [selectedWaves, files, messageApi]);
 
+  // 当 EChartsWrapper 的 ref 设置时，传递给父组件
+  const handleRef = (ref: EChartsHandle | null) => {
+    (chartRef as React.MutableRefObject<EChartsHandle | null>).current = ref;
+    onChartRef?.(ref);
+  };
+
   return (
     <div
       style={{
@@ -63,7 +68,7 @@ export default function PlotArea({ onResetZoom, onChartRef }: PlotAreaProps) {
           在左侧目录树中勾选波形以显示
         </div>
       ) : (
-        <EChartsWrapper ref={chartRef} series={series} style={{ flex: 1 }} />
+        <EChartsWrapper ref={handleRef} series={series} style={{ flex: 1 }} />
       )}
     </div>
   );
