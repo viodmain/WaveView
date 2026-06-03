@@ -31,7 +31,7 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
     if (allSeries.length > 0) {
       const xUnits = new Set(allSeries.map((s) => s.unit.x));
       if (xUnits.size > 1) {
-        messageApi.warning('检测到不同 X 轴单位的波形混搭，可能导致显示异常');
+        messageApi.warning('Mixed X-axis units detected, may cause display issues');
       }
     }
 
@@ -65,7 +65,7 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
             fontSize: 14,
           }}
         >
-          在左侧目录树中勾选波形以显示
+          Select waveforms in the file tree to display
         </div>
       ) : (
         <EChartsWrapper ref={handleRef} series={series} style={{ flex: 1 }} />

@@ -173,6 +173,6 @@ describe('parserFactory', () => {
   });
 
   it('should throw for unsupported format', () => {
-    expect(() => parseFile('test.xyz', '')).toThrow('不支持的文件格式');
+    expect(() => parseFile('test.xyz', '')).toThrow('Unsupported file format');
   });
 });

@@ -120,12 +120,12 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           dataZoom: {
             yAxisIndex: 'none',
             title: {
-              zoom: '框选放大',
-              back: '还原',
+              zoom: 'Box Zoom',
+              back: 'Restore',
             },
           },
           restore: {
-            title: '还原',
+            title: 'Restore',
           },
         },
       },

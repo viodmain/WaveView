@@ -17,7 +17,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProp
   const [messageApi, contextHolder] = message.useMessage();
 
   const handleClick = (label: string) => {
-    messageApi.info(`${label} — 功能开发中`);
+    messageApi.info(`${label} — Coming soon`);
   };
 
   return (
@@ -43,7 +43,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProp
             onClick={onOpenFile}
           />
         </Tooltip>
-        <Tooltip title="Zoom (框选放大)">
+        <Tooltip title="Zoom (Box select)">
           <Button
             type="text"
             size="small"
@@ -78,7 +78,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProp
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.13
+        WaveView v1.0.14
       </span>
     </div>
   );

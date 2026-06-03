@@ -47,31 +47,31 @@ export default function App() {
       for (const filePath of filePaths) {
         const result = await window.electronAPI.readFile(filePath);
         if (!result.success) {
-          messageApi.error(`读取文件失败: ${result.error}`);
+          messageApi.error(`Failed to read file: ${result.error}`);
           continue;
         }
 
         try {
           const parsed = parseFile(result.filename!, result.content!);
           addFile(parsed);
-          messageApi.success(`已导入: ${result.filename}`);
+          messageApi.success(`Imported: ${result.filename}`);
         } catch (err) {
-          messageApi.error(`解析失败: ${err instanceof Error ? err.message : String(err)}`);
+          messageApi.error(`Parse failed: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
     } catch (err) {
-      messageApi.error(`操作失败: ${err instanceof Error ? err.message : String(err)}`);
+      messageApi.error(`Operation failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, [addFile, messageApi]);
 
   const handleZoom = useCallback(() => {
     chartRef.current?.startDataZoom();
-    messageApi.info('框选放大模式已启用，请在图表上拖动选择区域');
+    messageApi.info('Box zoom enabled, drag on chart to select area');
   }, [messageApi]);
 
   const handleResetZoom = useCallback(() => {
     chartRef.current?.resetZoom();
-    messageApi.info('视图已重置');
+    messageApi.info('View reset');
   }, [messageApi]);
 
   // 键盘快捷键

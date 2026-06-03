@@ -17,7 +17,7 @@ const parsers: FileParser[] = [
 export function parseFile(filename: string, content: string): ParsedFile {
   const parser = parsers.find((p) => p.canParse(filename));
   if (!parser) {
-    throw new Error(`不支持的文件格式: ${filename}`);
+    throw new Error(`Unsupported file format: ${filename}`);
   }
   return parser.parse(filename, content);
 }
