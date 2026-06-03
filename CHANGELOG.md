@@ -1,0 +1,65 @@
+# Changelog
+
+## [1.0.2] - 2026-06-03
+
+### 第三阶段：文件解析
+
+#### 新增功能
+
+- **tr0 解析器** — 解析 SPICE 瞬态分析文件（无空格科学计数法，列名跨行合并）
+- **ac0 解析器** — 解析交流分析文件（#H/#N/#C 格式，复数实部/虚部，`/0.0` 合并 token 处理）
+- **s*p 解析器** — 解析 Touchstone S 参数文件（支持 RI/MA/DB 三种格式，自动推断端口数）
+- **parserFactory** — 按文件扩展名自动路由到对应解析器
+- **单元测试** — 20 个测试用例，覆盖三种解析器 + 工厂路由 + 异常处理
+
+#### 测试验证
+
+- 使用 `file_example/` 中的 4 个真实文件验证解析结果
+- tr0: 7 列数据，880 行完整解析
+- ac0: 12 个节点复数数据完整解析
+- s2p: 2 端口 4 条 S 参数
+- s4p: 4 端口 16 条 S 参数
+
+---
+
+## [1.0.1] - 2026-06-03
+
+### 第二阶段：UI Demo
+
+#### 新增功能
+
+- **三栏布局** — 顶部 Workbench + 左侧 FileTree + 右侧 PlotArea，可拖拽分割线
+- **VSCode 深色主题** — CSS 变量 + Ant Design dark token
+- **Workbench 工具栏** — Open / Zoom / Reset / New Window / Settings 五个按钮
+- **FileTree 目录树** — Ant Design Tree 组件，checkbox 选中波形，展开/折叠
+- **EChartsWrapper** — 直接引入 echarts 官方包，按需加载 LineChart + CanvasRenderer
+- **PlotArea 绘图区** — mock 数据波形绘制，滚轮缩放，拖动平移
+- **状态管理** — Zustand stores: fileStore / waveStore / settingsStore
+- **交互串联** — FileTree 勾选 → waveStore 更新 → PlotArea 实时重绘
+
+---
+
+## [1.0.0] - 2026-06-03
+
+### 第一阶段：开发环境与打包环境搭建
+
+#### 项目初始化
+
+- **Electron 主进程** — 窗口创建、文件对话框 IPC、开发/生产环境自动切换
+- **Preload 脚本** — contextBridge 安全暴露 electronAPI
+- **React 渲染进程** — Ant Design 深色主题 ConfigProvider
+- **共享类型定义** — WaveformData / ParsedFile / IPC_CHANNELS
+
+#### 构建验证
+
+- Vite 开发服务器正常启动（localhost:5173）
+- TypeScript 编译通过（主进程 + 渲染进程）
+- Vite 生产构建成功
+- Electron 二进制可用（v28.3.3）
+- Windows NSIS 安装包打包成功
+
+#### 工具链
+
+- ESLint + Prettier 配置
+- Vitest 测试框架（冒烟测试通过）
+- .gitignore 覆盖 dist/ release/ node_modules/
