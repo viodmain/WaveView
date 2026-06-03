@@ -19,6 +19,10 @@ release/
 .DS_Store
 Thumbs.db
 
+# Logs
+*.log
+npm-debug.log*
+
 # Project specific
 CLAUDE.md
 PRD.md
