@@ -72,7 +72,7 @@ export default function Workbench() {
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.2
+        WaveView v1.0.3
       </span>
     </div>
   );
