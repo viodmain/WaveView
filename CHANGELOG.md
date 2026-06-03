@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.12] - 2026-06-03
+
+### 修复
+
+- **Ctrl/Shift 单独缩放** — 使用 ECharts 原生配置（`zoomOnMouseWheel: 'ctrl'`/`'shift'`）替代自定义实现
+
+---
+
 ## [1.0.11] - 2026-06-03
 
 ### 修复

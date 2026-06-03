@@ -48,30 +48,15 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     resetZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
-      // 重置两个 dataZoom
-      chart.dispatchAction({
-        type: 'dataZoom',
-        dataZoomIndex: 0,
-        start: 0,
-        end: 100,
-      });
-      chart.dispatchAction({
-        type: 'dataZoom',
-        dataZoomIndex: 1,
-        start: 0,
-        end: 100,
-      });
-      // 退出框选模式
-      setIsZoomMode(false);
       chart.dispatchAction({
         type: 'restore',
       });
+      setIsZoomMode(false);
     },
     startDataZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
       setIsZoomMode(true);
-      // 激活 toolbox 的 dataZoom 选框模式
       chart.dispatchAction({
         type: 'takeGlobalCursor',
         key: 'dataZoomSelect',
@@ -94,68 +79,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       chart.dispose();
       chartRef.current = null;
     };
-  }, []);
-
-  // 监听鼠标滚轮事件，实现 Ctrl/Shift 单独缩放
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      const chart = chartRef.current;
-      if (!chart) return;
-
-      const chartWidth = container.clientWidth;
-      const chartHeight = container.clientHeight;
-      const rect = container.getBoundingClientRect();
-      const mouseX = ((e.clientX - rect.left) / chartWidth) * 100;
-      const mouseY = ((e.clientY - rect.top) / chartHeight) * 100;
-
-      const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
-
-      if (e.ctrlKey) {
-        e.preventDefault();
-        const option = chart.getOption() as any;
-        const xZoom = option.dataZoom?.[0];
-        if (xZoom) {
-          const start = xZoom.start ?? 0;
-          const end = xZoom.end ?? 100;
-          const range = end - start;
-          const newRange = range * zoomFactor;
-          const center = start + (range * mouseX) / 100;
-          const newStart = Math.max(0, center - (newRange * mouseX) / 100);
-          const newEnd = Math.min(100, newStart + newRange);
-          chart.dispatchAction({
-            type: 'dataZoom',
-            dataZoomIndex: 0,
-            start: newStart,
-            end: newEnd,
-          });
-        }
-      } else if (e.shiftKey) {
-        e.preventDefault();
-        const option = chart.getOption() as any;
-        const yZoom = option.dataZoom?.[1];
-        if (yZoom) {
-          const start = yZoom.start ?? 0;
-          const end = yZoom.end ?? 100;
-          const range = end - start;
-          const newRange = range * zoomFactor;
-          const center = start + (range * (100 - mouseY)) / 100;
-          const newStart = Math.max(0, center - (newRange * (100 - mouseY)) / 100);
-          const newEnd = Math.min(100, newStart + newRange);
-          chart.dispatchAction({
-            type: 'dataZoom',
-            dataZoomIndex: 1,
-            start: newStart,
-            end: newEnd,
-          });
-        }
-      }
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
   // 更新图表配置
@@ -233,8 +156,20 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         splitLine: { lineStyle: { color: '#333' } },
       },
       dataZoom: [
-        { type: 'inside', xAxisIndex: 0 },
-        { type: 'inside', yAxisIndex: 0 },
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          zoomOnMouseWheel: 'ctrl',    // Ctrl + 滚轮：只缩放 X 轴
+          moveOnMouseMove: false,
+          preventDefaultMouseMove: true,
+        },
+        {
+          type: 'inside',
+          yAxisIndex: 0,
+          zoomOnMouseWheel: 'shift',   // Shift + 滚轮：只缩放 Y 轴
+          moveOnMouseMove: false,
+          preventDefaultMouseMove: true,
+        },
       ],
       series: series.map((s) => ({
         name: s.name,
