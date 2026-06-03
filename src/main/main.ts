@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
+import fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -41,6 +42,16 @@ ipcMain.handle('open-file-dialog', async () => {
     ],
   });
   return result.canceled ? null : result.filePaths;
+});
+
+// IPC：读取文件内容
+ipcMain.handle('read-file', async (_event, filePath: string) => {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return { success: true, content, filename: path.basename(filePath) };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
 });
 
 app.whenReady().then(createWindow);

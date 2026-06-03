@@ -238,7 +238,8 @@ interface ParsedFile {
 
 ### 第四阶段：文件导入与真实数据串联（2-3天）
 
-- [ ] 实现文件对话框（Electron dialog，支持拖拽导入）
+- [ ] 实现文件对话框（Electron dialog）
+- [ ] ~~拖拽导入~~（待定）
 - [ ] 解析结果写入 fileStore → FileTree 自动更新
 - [ ] FileTree 点击波形 → 用真实数据重绘 PlotArea
 - [ ] 波形单位自动识别，坐标轴动态标注

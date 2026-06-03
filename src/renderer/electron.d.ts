@@ -1,6 +1,6 @@
 export interface ElectronAPI {
   openFileDialog: () => Promise<string[] | null>;
-  onFileOpened: (callback: (filePath: string) => void) => void;
+  readFile: (filePath: string) => Promise<{ success: boolean; content?: string; filename?: string; error?: string }>;
 }
 
 declare global {

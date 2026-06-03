@@ -7,7 +7,12 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 
-export default function Workbench() {
+interface WorkbenchProps {
+  onOpenFile?: () => void;
+  onReset?: () => void;
+}
+
+export default function Workbench({ onOpenFile, onReset }: WorkbenchProps) {
   const [messageApi, contextHolder] = message.useMessage();
 
   const handleClick = (label: string) => {
@@ -34,7 +39,7 @@ export default function Workbench() {
             type="text"
             size="small"
             icon={<FolderOpenOutlined />}
-            onClick={() => handleClick('Open')}
+            onClick={onOpenFile}
           />
         </Tooltip>
         <Tooltip title="Zoom">
@@ -50,7 +55,7 @@ export default function Workbench() {
             type="text"
             size="small"
             icon={<CompressOutlined />}
-            onClick={() => handleClick('Reset')}
+            onClick={onReset}
           />
         </Tooltip>
         <Tooltip title="New Window">
@@ -72,7 +77,7 @@ export default function Workbench() {
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.3
+        WaveView v1.0.4
       </span>
     </div>
   );
