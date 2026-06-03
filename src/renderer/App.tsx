@@ -5,6 +5,7 @@ import FileTree from './components/FileTree/FileTree';
 import PlotArea from './components/PlotArea/PlotArea';
 import { useFileStore } from './stores/fileStore';
 import { parseFile } from './parsers/parserFactory';
+import type { EChartsHandle } from './components/PlotArea/EChartsWrapper';
 import './styles/global.css';
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
   const startX = useRef(0);
   const startWidth = useRef(0);
   const addFile = useFileStore((s) => s.addFile);
+  const chartRef = useRef<EChartsHandle | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isResizing.current = true;
@@ -62,9 +64,15 @@ export default function App() {
     }
   }, [addFile, messageApi]);
 
-  // 键盘快捷键 Ctrl+O
+  const handleResetZoom = useCallback(() => {
+    chartRef.current?.resetZoom();
+    messageApi.info('视图已重置');
+  }, [messageApi]);
+
+  // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+O 打开文件
       if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
         e.preventDefault();
         handleOpenFile();
@@ -86,7 +94,7 @@ export default function App() {
     >
       {contextHolder}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <Workbench onOpenFile={handleOpenFile} />
+        <Workbench onOpenFile={handleOpenFile} onReset={handleResetZoom} />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ width: sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
             <FileTree />
@@ -96,7 +104,7 @@ export default function App() {
             onMouseDown={handleMouseDown}
           />
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <PlotArea />
+            <PlotArea onChartRef={(ref) => { chartRef.current = ref; }} />
           </div>
         </div>
       </div>

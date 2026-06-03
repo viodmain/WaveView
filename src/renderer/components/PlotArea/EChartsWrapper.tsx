@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import {
@@ -18,14 +18,42 @@ export interface SeriesData {
   unit: { x: string; y: string };
 }
 
+export interface EChartsHandle {
+  resetZoom: () => void;
+  setZoomMode: (enabled: boolean) => void;
+}
+
 interface EChartsWrapperProps {
   series: SeriesData[];
   style?: React.CSSProperties;
 }
 
-export default function EChartsWrapper({ series, style }: EChartsWrapperProps) {
+const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series, style }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
+
+  // 暴露方法给父组件
+  useImperativeHandle(ref, () => ({
+    resetZoom: () => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      chart.dispatchAction({
+        type: 'dataZoom',
+        start: 0,
+        end: 100,
+      });
+    },
+    setZoomMode: (enabled: boolean) => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      chart.setOption({
+        dataZoom: [
+          { type: enabled ? 'inside' : 'inside', xAxisIndex: 0 },
+          { type: enabled ? 'inside' : 'inside', yAxisIndex: 0 },
+        ],
+      });
+    },
+  }));
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -105,4 +133,8 @@ export default function EChartsWrapper({ series, style }: EChartsWrapperProps) {
       style={{ width: '100%', height: '100%', ...style }}
     />
   );
-}
+});
+
+EChartsWrapper.displayName = 'EChartsWrapper';
+
+export default EChartsWrapper;

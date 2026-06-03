@@ -1,22 +1,43 @@
-import EChartsWrapper from './EChartsWrapper';
+import { useRef, useMemo } from 'react';
+import { message } from 'antd';
+import EChartsWrapper, { type EChartsHandle } from './EChartsWrapper';
 import { useFileStore } from '../../stores/fileStore';
 import { useWaveStore } from '../../stores/waveStore';
 
-export default function PlotArea() {
+interface PlotAreaProps {
+  onResetZoom?: () => void;
+  onChartRef?: (ref: EChartsHandle | null) => void;
+}
+
+export default function PlotArea({ onResetZoom, onChartRef }: PlotAreaProps) {
+  const chartRef = useRef<EChartsHandle>(null);
   const files = useFileStore((s) => s.files);
   const selectedWaves = useWaveStore((s) => s.selectedWaves);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 收集所有选中的波形数据
-  const series = Array.from(selectedWaves)
-    .map((key) => {
-      const [filename, waveName] = key.split('::');
-      const file = files.get(filename);
-      if (!file) return null;
-      const wave = file.waveforms.find((w: { name: string }) => w.name === waveName);
-      if (!wave) return null;
-      return wave;
-    })
-    .filter(Boolean) as { name: string; xData: number[]; yData: number[]; unit: { x: string; y: string } }[];
+  const series = useMemo(() => {
+    const allSeries = Array.from(selectedWaves)
+      .map((key) => {
+        const [filename, waveName] = key.split('::');
+        const file = files.get(filename);
+        if (!file) return null;
+        const wave = file.waveforms.find((w: { name: string }) => w.name === waveName);
+        if (!wave) return null;
+        return wave;
+      })
+      .filter(Boolean) as { name: string; xData: number[]; yData: number[]; unit: { x: string; y: string } }[];
+
+    // X 轴单位校验：检查是否有不同单位的波形混搭
+    if (allSeries.length > 0) {
+      const xUnits = new Set(allSeries.map((s) => s.unit.x));
+      if (xUnits.size > 1) {
+        messageApi.warning('检测到不同 X 轴单位的波形混搭，可能导致显示异常');
+      }
+    }
+
+    return allSeries;
+  }, [selectedWaves, files, messageApi]);
 
   return (
     <div
@@ -27,6 +48,7 @@ export default function PlotArea() {
         flexDirection: 'column',
       }}
     >
+      {contextHolder}
       {series.length === 0 ? (
         <div
           style={{
@@ -41,7 +63,7 @@ export default function PlotArea() {
           在左侧目录树中勾选波形以显示
         </div>
       ) : (
-        <EChartsWrapper series={series} style={{ flex: 1 }} />
+        <EChartsWrapper ref={chartRef} series={series} style={{ flex: 1 }} />
       )}
     </div>
   );
