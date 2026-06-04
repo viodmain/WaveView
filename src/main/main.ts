@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -53,6 +53,9 @@ ipcMain.handle('read-file', async (_event, filePath: string) => {
     return { success: false, error: String(err) };
   }
 });
+
+// 移除默认菜单栏
+Menu.setApplicationMenu(null);
 
 app.whenReady().then(createWindow);
 
