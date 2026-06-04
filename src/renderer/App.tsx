@@ -4,14 +4,17 @@ import Workbench from './components/Workbench/Workbench';
 import FileTree from './components/FileTree/FileTree';
 import PlotArea from './components/PlotArea/PlotArea';
 import WindowTabs from './components/PlotArea/WindowTabs';
+import SettingsPanel from './components/Settings/SettingsPanel';
 import { useFileStore } from './stores/fileStore';
 import { useWindowStore } from './stores/windowStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { parseFile } from './parsers/parserFactory';
 import type { EChartsHandle } from './components/PlotArea/EChartsWrapper';
 import './styles/global.css';
 
 export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const isResizing = useRef(false);
   const startX = useRef(0);
@@ -19,6 +22,7 @@ export default function App() {
   const addFile = useFileStore((s) => s.addFile);
   const createWindow = useWindowStore((s) => s.createWindow);
   const chartRef = useRef<EChartsHandle | null>(null);
+  const settingsStore = useSettingsStore();
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isResizing.current = true;
@@ -82,6 +86,10 @@ export default function App() {
     messageApi.info('New window created');
   }, [createWindow, messageApi]);
 
+  const handleOpenSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -95,13 +103,17 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleOpenFile]);
 
+  // 根据设置选择主题算法
+  const themeAlgorithm = settingsStore.theme === 'light' ? theme.defaultAlgorithm : theme.darkAlgorithm;
+
   return (
     <ConfigProvider
       theme={{
-        algorithm: theme.darkAlgorithm,
+        algorithm: themeAlgorithm,
         token: {
           colorPrimary: '#007acc',
           borderRadius: 2,
+          fontSize: settingsStore.fontSize,
         },
       }}
     >
@@ -112,6 +124,7 @@ export default function App() {
           onZoom={handleZoom}
           onReset={handleResetZoom}
           onNewWindow={handleNewWindow}
+          onOpenSettings={handleOpenSettings}
         />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ width: sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
@@ -129,6 +142,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </ConfigProvider>
   );
 }

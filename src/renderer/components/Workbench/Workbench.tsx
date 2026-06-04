@@ -1,4 +1,4 @@
-import { Button, Tooltip, message, Space } from 'antd';
+import { Button, Tooltip, Space } from 'antd';
 import {
   FolderOpenOutlined,
   DragOutlined,
@@ -12,15 +12,10 @@ interface WorkbenchProps {
   onZoom?: () => void;
   onReset?: () => void;
   onNewWindow?: () => void;
+  onOpenSettings?: () => void;
 }
 
-export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow }: WorkbenchProps) {
-  const [messageApi, contextHolder] = message.useMessage();
-
-  const handleClick = (label: string) => {
-    messageApi.info(`${label} — Coming soon`);
-  };
-
+export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
   return (
     <div
       style={{
@@ -34,7 +29,6 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow }: 
         flexShrink: 0,
       }}
     >
-      {contextHolder}
       <Space size={4}>
         <Tooltip title="Open (Ctrl+O)">
           <Button
@@ -73,13 +67,13 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow }: 
             type="text"
             size="small"
             icon={<SettingOutlined />}
-            onClick={() => handleClick('Settings')}
+            onClick={onOpenSettings}
           />
         </Tooltip>
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.16
+        WaveView v1.0.17
       </span>
     </div>
   );
