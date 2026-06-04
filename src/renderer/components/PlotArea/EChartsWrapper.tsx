@@ -98,105 +98,108 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       return;
     }
 
-    // 根据主题获取颜色
-    const bgColor = getCssVar('--bg-base') || '#1e1e1e';
-    const textColor = getCssVar('--text-primary') || '#cccccc';
-    const secondaryColor = getCssVar('--text-secondary') || '#969696';
-    const borderColor = getCssVar('--border') || '#333333';
+    // 延迟执行，确保 CSS 变量已经更新
+    const timer = setTimeout(() => {
+      // 根据主题获取颜色
+      const bgColor = getCssVar('--bg-base') || '#1e1e1e';
+      const textColor = getCssVar('--text-primary') || '#cccccc';
+      const secondaryColor = getCssVar('--text-secondary') || '#969696';
+      const borderColor = getCssVar('--border') || '#333333';
 
-    const xUnit = series[0]?.unit.x ?? '';
-    const yUnit = series[0]?.unit.y ?? '';
+      const xUnit = series[0]?.unit.x ?? '';
+      const yUnit = series[0]?.unit.y ?? '';
 
-    const option: echarts.EChartsCoreOption = {
-      backgroundColor: bgColor,
-      textStyle: { color: textColor },
-      tooltip: {
-        trigger: 'axis',
-        formatter: (params: any) => {
-          if (!Array.isArray(params) || params.length === 0) return '';
-          const x = params[0]?.value?.[0];
-          let html = `<div style="font-weight:bold">${scientificNotation(x)} ${xUnit}</div>`;
-          for (const p of params) {
-            html += `<div>${p.marker} ${p.seriesName}: ${scientificNotation(p.value?.[1])} ${yUnit}</div>`;
-          }
-          return html;
+      const option: echarts.EChartsCoreOption = {
+        backgroundColor: bgColor,
+        textStyle: { color: textColor },
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params: any) => {
+            if (!Array.isArray(params) || params.length === 0) return '';
+            const x = params[0]?.value?.[0];
+            let html = `<div style="font-weight:bold">${scientificNotation(x)} ${xUnit}</div>`;
+            for (const p of params) {
+              html += `<div>${p.marker} ${p.seriesName}: ${scientificNotation(p.value?.[1])} ${yUnit}</div>`;
+            }
+            return html;
+          },
         },
-      },
-      legend: {
-        top: 8,
-        textStyle: { color: secondaryColor },
-      },
-      toolbox: {
-        show: true,
-        right: 20,
-        top: 8,
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none',
-            title: {
-              zoom: 'Box Zoom',
-              back: 'Restore',
+        legend: {
+          top: 8,
+          textStyle: { color: secondaryColor },
+        },
+        toolbox: {
+          show: true,
+          right: 20,
+          top: 8,
+          feature: {
+            dataZoom: {
+              yAxisIndex: 'none',
+              title: {
+                zoom: 'Box Zoom',
+                back: 'Restore',
+              },
+            },
+            restore: {
+              title: 'Restore',
             },
           },
-          restore: {
-            title: 'Restore',
+        },
+        grid: {
+          left: 80,
+          right: 30,
+          top: 40,
+          bottom: 60,
+        },
+        xAxis: {
+          type: 'value',
+          name: xUnit,
+          nameTextStyle: { color: secondaryColor },
+          axisLabel: {
+            color: secondaryColor,
+            formatter: (value: number) => scientificNotation(value),
           },
+          splitLine: { lineStyle: { color: borderColor } },
         },
-      },
-      grid: {
-        left: 80,
-        right: 30,
-        top: 40,
-        bottom: 60,
-      },
-      xAxis: {
-        type: 'value',
-        name: xUnit,
-        nameTextStyle: { color: secondaryColor },
-        axisLabel: {
-          color: secondaryColor,
-          formatter: (value: number) => scientificNotation(value),
+        yAxis: {
+          type: 'value',
+          name: yUnit,
+          nameTextStyle: { color: secondaryColor },
+          axisLabel: {
+            color: secondaryColor,
+            formatter: (value: number) => scientificNotation(value),
+          },
+          splitLine: { lineStyle: { color: borderColor } },
         },
-        splitLine: { lineStyle: { color: borderColor } },
-      },
-      yAxis: {
-        type: 'value',
-        name: yUnit,
-        nameTextStyle: { color: secondaryColor },
-        axisLabel: {
-          color: secondaryColor,
-          formatter: (value: number) => scientificNotation(value),
-        },
-        splitLine: { lineStyle: { color: borderColor } },
-      },
-      dataZoom: [
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          zoomOnMouseWheel: 'ctrl',
-          moveOnMouseMove: false,
-          preventDefaultMouseMove: true,
-          filterMode: 'none',
-        },
-        {
-          type: 'inside',
-          yAxisIndex: 0,
-          zoomOnMouseWheel: 'shift',
-          moveOnMouseMove: false,
-          preventDefaultMouseMove: true,
-          filterMode: 'none',
-        },
-      ],
-      series: series.map((s) => ({
-        name: s.name,
-        type: 'line' as const,
-        showSymbol: false,
-        lineStyle: { width: 1.5 },
-        data: s.xData.map((x, i) => [x, s.yData[i]]),
-      })),
-    };
+        dataZoom: [
+          {
+            type: 'inside',
+            xAxisIndex: 0,
+            zoomOnMouseWheel: 'ctrl',
+            moveOnMouseMove: false,
+            preventDefaultMouseMove: true,
+            filterMode: 'none',
+          },
+          {
+            type: 'inside',
+            yAxisIndex: 0,
+            zoomOnMouseWheel: 'shift',
+            moveOnMouseMove: false,
+            preventDefaultMouseMove: true,
+            filterMode: 'none',
+          },
+        ],
+        series: series.map((s) => ({
+          name: s.name,
+          type: 'line' as const,
+          showSymbol: false,
+          lineStyle: { width: 1.5 },
+          data: s.xData.map((x, i) => [x, s.yData[i]]),
+        })),
+      };
 
-    chart.setOption(option, true);
+      chart.setOption(option, true);
+    }, 50); // 延迟 50ms 确保 CSS 变量已更新
 
     // 如果是框选模式，重新激活
     if (isZoomMode) {
@@ -206,6 +209,8 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         dataZoomSelectActive: true,
       });
     }
+
+    return () => clearTimeout(timer);
   }, [series, isZoomMode, theme]);
 
   return (
