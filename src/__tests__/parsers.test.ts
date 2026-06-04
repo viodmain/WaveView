@@ -92,6 +92,32 @@ describe('trParser', () => {
       }
     });
   });
+
+  describe('old format with counter row (1 and 15)', () => {
+    const content = readExample('瞬态/rmin2_modify_2_pathadapt_prbs_BTD_1.tr0');
+    const result = parseTrFile('rmin2_modify_2_pathadapt_prbs_BTD_1.tr0', content);
+
+    it('should parse waveforms', () => {
+      expect(result.waveforms.length).toBeGreaterThan(0);
+    });
+
+    it('should not include counter row numbers as column names', () => {
+      const names = result.waveforms.map((w) => w.name);
+      expect(names).not.toContain('15');
+      expect(names).not.toContain('1');
+    });
+
+    it('should parse data points', () => {
+      expect(result.waveforms[0].xData.length).toBeGreaterThan(0);
+    });
+
+    it('should have finite data', () => {
+      for (const wave of result.waveforms) {
+        expect(wave.xData.every((v) => isFinite(v))).toBe(true);
+        expect(wave.yData.every((v) => isFinite(v))).toBe(true);
+      }
+    });
+  });
 });
 
 describe('acParser', () => {

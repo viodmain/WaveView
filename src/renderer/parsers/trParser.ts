@@ -7,6 +7,7 @@ import type { ParsedFile, WaveformData } from '../../shared/types';
  *
  * 格式1（旧格式）：
  *  行1-5: 仿真厂商信息
+ *  计数行: 纯数字行（如 1 1 1 1 1 15 15 15 1）—— 跳过
  *  列名行: 波形名称，第一个为X轴（通常为TIME），$&%# 为结束符
  *  数据行: 无空格分隔的科学计数法，用正负号分割
  *  数据结束: 0.10000E+31 为结束符
@@ -15,7 +16,7 @@ import type { ParsedFile, WaveformData } from '../../shared/types';
  *  #H - 头信息块
  *  #N - 节点名称列表
  *  #C - 数据块：时间 节点数 值1 值2 ...
- *  #; - 结束符
+ *  #; - 结束符（可能出现在数据中间，跳过）
  */
 export function parseTrFile(filename: string, content: string): ParsedFile {
   // 检测格式：是否包含 #H 或 #N 或 #C
@@ -115,35 +116,47 @@ function parseTrOldFormat(filename: string, content: string): ParsedFile {
   const lines = content.split(/\r?\n/);
 
   // 跳过开头的空行和厂商信息，找到列名行
+  // 列名行特征：包含波形名称（如 TIME），不是纯数字，不包含 Copyright
   let nameLineIdx = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (line === '') continue;
+    // 跳过纯数字行（计数行）
     if (/^[\d\s]+$/.test(line)) continue;
     if (/Copyright|^\w{3}\s+\w{3}\s+\d+/.test(line)) continue;
     if (/\*/.test(line)) continue;
+    // 找到列名行
     if (/TIME|[a-z_]\w*/i.test(line)) {
       nameLineIdx = i;
       break;
     }
   }
 
-  // 收集列名（可能跨多行，直到遇到数据行或 $&%#）
+  // 收集列名（可能跨多行，直到遇到 $&%# 或数据行）
   let nameStr = '';
   let dataStartIdx = nameLineIdx;
   for (let i = nameLineIdx; i < lines.length; i++) {
     const line = lines[i];
+    // 数据行以 + 或 - 开头，包含科学计数法
     if (/[+\-]\d+\.\d+e/i.test(line)) {
       dataStartIdx = i;
+      break;
+    }
+    // 遇到 $&%# 结束符，停止收集列名
+    if (line.includes('$&%#')) {
+      // 把 $&%# 之前的部分也加入
+      const beforeEnd = line.split('$&%#')[0];
+      nameStr += ' ' + beforeEnd;
+      dataStartIdx = i + 1;
       break;
     }
     nameStr += ' ' + line;
     dataStartIdx = i + 1;
   }
 
-  // 解析列名：按多个空格分割，过滤掉 $&%# 结束符
+  // 解析列名：按多个空格分割，过滤掉空值、$&%#、纯数字
   const rawNames = nameStr.trim().split(/\s{2,}/).filter(Boolean);
-  const colNames = rawNames.filter((name) => name !== '$&%#');
+  const colNames = rawNames.filter((name) => name !== '$&%#' && !/^\d+$/.test(name));
   const numCols = colNames.length;
 
   // 收集所有数据值（先切分为一个大数组，不分割到各行）
