@@ -1,6 +1,6 @@
 {
   "name": "waveview",
-  "version": "1.1.3",
+  "version": "1.1.2",
   "description": "Waveform viewer for SPICE simulation files",
   "main": "dist/main/main.js",
   "scripts": {
