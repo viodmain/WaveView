@@ -72,9 +72,15 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     },
   }));
 
-  // 初始化图表
+  // 初始化图表（主题变化时重新初始化）
   useEffect(() => {
     if (!containerRef.current) return;
+
+    // 销毁旧实例
+    if (chartRef.current) {
+      chartRef.current.dispose();
+    }
+
     const chart = echarts.init(containerRef.current);
     chartRef.current = chart;
 
@@ -86,7 +92,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       chart.dispose();
       chartRef.current = null;
     };
-  }, []);
+  }, [theme]); // 主题变化时重新初始化
 
   // 更新图表配置
   useEffect(() => {
