@@ -199,13 +199,23 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             filterMode: 'none',
           },
         ],
-        series: series.map((s) => ({
-          name: s.name,
-          type: 'line' as const,
-          showSymbol: false,
-          lineStyle: { width: 1.5 },
-          data: s.xData.map((x, i) => [x, s.yData[i]]),
-        })),
+        series: series.map((s) => {
+          // 对数轴时过滤掉无效数据点（0 或负值）
+          let data = s.xData.map((x, i) => [x, s.yData[i]]);
+          if (isXLog) {
+            data = data.filter(([x]) => x > 0);
+          }
+          if (isYLog) {
+            data = data.filter(([_, y]) => y > 0);
+          }
+          return {
+            name: s.name,
+            type: 'line' as const,
+            showSymbol: false,
+            lineStyle: { width: 1.5 },
+            data,
+          };
+        }),
       };
 
       chart.setOption(option, true);
