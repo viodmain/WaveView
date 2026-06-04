@@ -79,7 +79,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow }: 
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.15
+        WaveView v1.0.16
       </span>
     </div>
   );

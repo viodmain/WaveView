@@ -16,7 +16,8 @@ interface WindowStore {
   clearWaves: (windowId: string) => void;
 }
 
-let nextId = 1;
+// 使用计数器生成唯一 id，从 2 开始（1 已被初始窗口使用）
+let nextId = 2;
 
 function generateId(): string {
   return `window-${nextId++}`;
