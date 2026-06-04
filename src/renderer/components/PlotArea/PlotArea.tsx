@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react';
 import { message } from 'antd';
 import EChartsWrapper, { type EChartsHandle } from './EChartsWrapper';
 import { useFileStore } from '../../stores/fileStore';
-import { useWaveStore } from '../../stores/waveStore';
+import { useWindowStore } from '../../stores/windowStore';
 
 interface PlotAreaProps {
   onChartRef?: (ref: EChartsHandle | null) => void;
@@ -11,8 +11,13 @@ interface PlotAreaProps {
 export default function PlotArea({ onChartRef }: PlotAreaProps) {
   const chartRef = useRef<EChartsHandle>(null);
   const files = useFileStore((s) => s.files);
-  const selectedWaves = useWaveStore((s) => s.selectedWaves);
+  const windows = useWindowStore((s) => s.windows);
+  const activeWindowId = useWindowStore((s) => s.activeWindowId);
   const [messageApi, contextHolder] = message.useMessage();
+
+  // 获取当前活跃窗口
+  const activeWindow = windows.find((w) => w.id === activeWindowId);
+  const selectedWaves = activeWindow?.selectedWaves ?? new Set<string>();
 
   // 收集所有选中的波形数据
   const series = useMemo(() => {
@@ -27,7 +32,7 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
       })
       .filter(Boolean) as { name: string; xData: number[]; yData: number[]; unit: { x: string; y: string } }[];
 
-    // X 轴单位校验：检查是否有不同单位的波形混搭
+    // X 轴单位校验
     if (allSeries.length > 0) {
       const xUnits = new Set(allSeries.map((s) => s.unit.x));
       if (xUnits.size > 1) {

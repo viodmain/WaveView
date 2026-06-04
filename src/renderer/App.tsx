@@ -3,7 +3,9 @@ import { ConfigProvider, theme, message } from 'antd';
 import Workbench from './components/Workbench/Workbench';
 import FileTree from './components/FileTree/FileTree';
 import PlotArea from './components/PlotArea/PlotArea';
+import WindowTabs from './components/PlotArea/WindowTabs';
 import { useFileStore } from './stores/fileStore';
+import { useWindowStore } from './stores/windowStore';
 import { parseFile } from './parsers/parserFactory';
 import type { EChartsHandle } from './components/PlotArea/EChartsWrapper';
 import './styles/global.css';
@@ -15,6 +17,7 @@ export default function App() {
   const startX = useRef(0);
   const startWidth = useRef(0);
   const addFile = useFileStore((s) => s.addFile);
+  const createWindow = useWindowStore((s) => s.createWindow);
   const chartRef = useRef<EChartsHandle | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -74,6 +77,11 @@ export default function App() {
     messageApi.info('View reset');
   }, [messageApi]);
 
+  const handleNewWindow = useCallback(() => {
+    createWindow();
+    messageApi.info('New window created');
+  }, [createWindow, messageApi]);
+
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,7 +107,12 @@ export default function App() {
     >
       {contextHolder}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <Workbench onOpenFile={handleOpenFile} onZoom={handleZoom} onReset={handleResetZoom} />
+        <Workbench
+          onOpenFile={handleOpenFile}
+          onZoom={handleZoom}
+          onReset={handleResetZoom}
+          onNewWindow={handleNewWindow}
+        />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ width: sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
             <FileTree />
@@ -108,8 +121,11 @@ export default function App() {
             className="ResizeHandle"
             onMouseDown={handleMouseDown}
           />
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <PlotArea onChartRef={(ref) => { chartRef.current = ref; }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <WindowTabs />
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <PlotArea onChartRef={(ref) => { chartRef.current = ref; }} />
+            </div>
           </div>
         </div>
       </div>

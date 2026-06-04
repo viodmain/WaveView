@@ -11,9 +11,10 @@ interface WorkbenchProps {
   onOpenFile?: () => void;
   onZoom?: () => void;
   onReset?: () => void;
+  onNewWindow?: () => void;
 }
 
-export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProps) {
+export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow }: WorkbenchProps) {
   const [messageApi, contextHolder] = message.useMessage();
 
   const handleClick = (label: string) => {
@@ -64,7 +65,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProp
             type="text"
             size="small"
             icon={<PlusSquareOutlined />}
-            onClick={() => handleClick('New Window')}
+            onClick={onNewWindow}
           />
         </Tooltip>
         <Tooltip title="Settings">
@@ -78,7 +79,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset }: WorkbenchProp
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.0.14
+        WaveView v1.0.15
       </span>
     </div>
   );
