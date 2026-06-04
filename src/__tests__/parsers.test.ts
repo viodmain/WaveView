@@ -72,6 +72,26 @@ describe('trParser', () => {
       expect(result.waveforms[0].unit.x).toBe('s');
     });
   });
+
+  describe('new format with mid-file #; terminator', () => {
+    const content = readExample('瞬态/A14_1.tr0');
+    const result = parseTrFile('A14_1.tr0', content);
+
+    it('should parse waveforms', () => {
+      expect(result.waveforms.length).toBe(6);
+    });
+
+    it('should parse data points', () => {
+      expect(result.waveforms[0].xData.length).toBeGreaterThan(0);
+    });
+
+    it('should have finite data', () => {
+      for (const wave of result.waveforms) {
+        expect(wave.xData.every((v) => isFinite(v))).toBe(true);
+        expect(wave.yData.every((v) => isFinite(v))).toBe(true);
+      }
+    });
+  });
 });
 
 describe('acParser', () => {

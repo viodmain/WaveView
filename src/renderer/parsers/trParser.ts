@@ -75,7 +75,9 @@ function parseTrNewFormat(filename: string, content: string): ParsedFile {
       }
       allValues.push(nodeData);
     } else if (line.startsWith('#;')) {
-      break;
+      // 跳过结束符，继续解析后续数据
+      i++;
+      continue;
     }
 
     i++;
