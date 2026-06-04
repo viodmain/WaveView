@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react';
-import { Tree, Dropdown, message } from 'antd';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Tree, message } from 'antd';
 import type { DataNode } from 'antd/es/tree';
-import type { MenuProps } from 'antd';
 import { FileTextOutlined, LineChartOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useFileStore } from '../../stores/fileStore';
 import { useWindowStore } from '../../stores/windowStore';
@@ -13,6 +12,7 @@ export default function FileTree() {
   const activeWindowId = useWindowStore((s) => s.activeWindowId);
   const toggleWave = useWindowStore((s) => s.toggleWave);
   const [messageApi, contextHolder] = message.useMessage();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -61,6 +61,7 @@ export default function FileTree() {
     // 只对文件节点（非叶子节点）响应右键
     if (!node.isLeaf) {
       event.preventDefault();
+      event.stopPropagation();
       setContextMenu({
         visible: true,
         x: event.clientX,
@@ -79,21 +80,18 @@ export default function FileTree() {
     setContextMenu({ visible: false, x: 0, y: 0, filename: null });
   }, [contextMenu.filename, removeFile, messageApi]);
 
-  // 关闭菜单
-  const handleCloseMenu = useCallback(() => {
-    setContextMenu({ visible: false, x: 0, y: 0, filename: null });
-  }, []);
-
-  // 右键菜单项
-  const menuItems: MenuProps['items'] = [
-    {
-      key: 'remove',
-      label: 'Remove',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: handleRemoveFile,
-    },
-  ];
+  // 点击其他地方关闭菜单
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu({ visible: false, x: 0, y: 0, filename: null });
+      }
+    };
+    if (contextMenu.visible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [contextMenu.visible]);
 
   return (
     <div
@@ -102,8 +100,8 @@ export default function FileTree() {
         background: 'var(--bg-sidebar)',
         overflow: 'auto',
         padding: '8px 0',
+        position: 'relative',
       }}
-      onClick={handleCloseMenu}
     >
       {contextHolder}
       <div
@@ -127,21 +125,46 @@ export default function FileTree() {
         onRightClick={handleRightClick}
         style={{ background: 'transparent', color: 'var(--text-primary)' }}
       />
-      <Dropdown
-        menu={{ items: menuItems }}
-        open={contextMenu.visible}
-        trigger={[]}
-      >
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
         <div
+          ref={menuRef}
           style={{
             position: 'fixed',
             left: contextMenu.x,
             top: contextMenu.y,
-            width: 0,
-            height: 0,
+            background: 'var(--bg-toolbar)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            padding: '4px 0',
+            zIndex: 1000,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            minWidth: 120,
           }}
-        />
-      </Dropdown>
+        >
+          <div
+            onClick={handleRemoveFile}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              color: '#ff4d4f',
+              fontSize: 13,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--bg-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <DeleteOutlined />
+            Remove
+          </div>
+        </div>
+      )}
     </div>
   );
 }
