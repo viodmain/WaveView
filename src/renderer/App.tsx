@@ -24,6 +24,13 @@ export default function App() {
   const chartRef = useRef<EChartsHandle | null>(null);
   const settingsStore = useSettingsStore();
 
+  // 根据主题切换 CSS 类名
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('theme-dark', 'theme-light');
+    root.classList.add(`theme-${settingsStore.theme}`);
+  }, [settingsStore.theme]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isResizing.current = true;
     startX.current = e.clientX;

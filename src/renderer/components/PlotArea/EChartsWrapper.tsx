@@ -9,6 +9,7 @@ import {
   ToolboxComponent,
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 echarts.use([LineChart, GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, ToolboxComponent, CanvasRenderer]);
 
@@ -38,10 +39,16 @@ function scientificNotation(value: number): string {
   return `${mantissa.toFixed(2)}e${exp}`;
 }
 
+/** 获取 CSS 变量值 */
+function getCssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series, style }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
   const [isZoomMode, setIsZoomMode] = useState(false);
+  const theme = useSettingsStore((s) => s.theme);
 
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
@@ -68,7 +75,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
   // 初始化图表
   useEffect(() => {
     if (!containerRef.current) return;
-    const chart = echarts.init(containerRef.current, 'dark');
+    const chart = echarts.init(containerRef.current);
     chartRef.current = chart;
 
     const handleResize = () => chart.resize();
@@ -91,11 +98,18 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       return;
     }
 
+    // 根据主题获取颜色
+    const bgColor = getCssVar('--bg-base') || '#1e1e1e';
+    const textColor = getCssVar('--text-primary') || '#cccccc';
+    const secondaryColor = getCssVar('--text-secondary') || '#969696';
+    const borderColor = getCssVar('--border') || '#333333';
+
     const xUnit = series[0]?.unit.x ?? '';
     const yUnit = series[0]?.unit.y ?? '';
 
     const option: echarts.EChartsCoreOption = {
-      backgroundColor: '#1e1e1e',
+      backgroundColor: bgColor,
+      textStyle: { color: textColor },
       tooltip: {
         trigger: 'axis',
         formatter: (params: any) => {
@@ -110,7 +124,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       },
       legend: {
         top: 8,
-        textStyle: { color: '#ccc' },
+        textStyle: { color: secondaryColor },
       },
       toolbox: {
         show: true,
@@ -138,39 +152,39 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       xAxis: {
         type: 'value',
         name: xUnit,
-        nameTextStyle: { color: '#999' },
+        nameTextStyle: { color: secondaryColor },
         axisLabel: {
-          color: '#999',
+          color: secondaryColor,
           formatter: (value: number) => scientificNotation(value),
         },
-        splitLine: { lineStyle: { color: '#333' } },
+        splitLine: { lineStyle: { color: borderColor } },
       },
       yAxis: {
         type: 'value',
         name: yUnit,
-        nameTextStyle: { color: '#999' },
+        nameTextStyle: { color: secondaryColor },
         axisLabel: {
-          color: '#999',
+          color: secondaryColor,
           formatter: (value: number) => scientificNotation(value),
         },
-        splitLine: { lineStyle: { color: '#333' } },
+        splitLine: { lineStyle: { color: borderColor } },
       },
       dataZoom: [
         {
           type: 'inside',
           xAxisIndex: 0,
-          zoomOnMouseWheel: 'ctrl',    // Ctrl + 滚轮：只缩放 X 轴
+          zoomOnMouseWheel: 'ctrl',
           moveOnMouseMove: false,
           preventDefaultMouseMove: true,
-          filterMode: 'none',          // 不过滤数据点，保留完整波形
+          filterMode: 'none',
         },
         {
           type: 'inside',
           yAxisIndex: 0,
-          zoomOnMouseWheel: 'shift',   // Shift + 滚轮：只缩放 Y 轴
+          zoomOnMouseWheel: 'shift',
           moveOnMouseMove: false,
           preventDefaultMouseMove: true,
-          filterMode: 'none',          // 不过滤数据点，保留完整波形
+          filterMode: 'none',
         },
       ],
       series: series.map((s) => ({
@@ -192,7 +206,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         dataZoomSelectActive: true,
       });
     }
-  }, [series, isZoomMode]);
+  }, [series, isZoomMode, theme]);
 
   return (
     <div
