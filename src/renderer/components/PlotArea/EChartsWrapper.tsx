@@ -49,6 +49,8 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
   const chartRef = useRef<echarts.ECharts | null>(null);
   const [isZoomMode, setIsZoomMode] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
+  const xAxisScale = useSettingsStore((s) => s.xAxisScale);
+  const yAxisScale = useSettingsStore((s) => s.yAxisScale);
 
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
@@ -109,6 +111,10 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       const xUnit = series[0]?.unit.x ?? '';
       const yUnit = series[0]?.unit.y ?? '';
 
+      // 判断是否使用对数轴
+      const isXLog = xAxisScale === 'log';
+      const isYLog = yAxisScale === 'log';
+
       const option: echarts.EChartsCoreOption = {
         backgroundColor: bgColor,
         textStyle: { color: textColor },
@@ -143,6 +149,10 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             restore: {
               title: 'Restore',
             },
+            saveAsImage: {
+              title: 'Save',
+              pixelRatio: 2,
+            },
           },
         },
         grid: {
@@ -152,7 +162,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           bottom: 60,
         },
         xAxis: {
-          type: 'value',
+          type: isXLog ? 'log' : 'value',
           name: xUnit,
           nameTextStyle: { color: secondaryColor },
           axisLabel: {
@@ -162,7 +172,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           splitLine: { lineStyle: { color: borderColor } },
         },
         yAxis: {
-          type: 'value',
+          type: isYLog ? 'log' : 'value',
           name: yUnit,
           nameTextStyle: { color: secondaryColor },
           axisLabel: {
@@ -199,7 +209,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       };
 
       chart.setOption(option, true);
-    }, 50); // 延迟 50ms 确保 CSS 变量已更新
+    }, 50);
 
     // 如果是框选模式，重新激活
     if (isZoomMode) {
@@ -211,7 +221,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     }
 
     return () => clearTimeout(timer);
-  }, [series, isZoomMode, theme]);
+  }, [series, isZoomMode, theme, xAxisScale, yAxisScale]);
 
   return (
     <div

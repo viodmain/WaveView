@@ -1,5 +1,5 @@
-import { Drawer, Switch, Slider, Space, Typography, Divider } from 'antd';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { Drawer, Switch, Slider, Space, Typography, Divider, Select } from 'antd';
+import { useSettingsStore, type AxisScale } from '../../stores/settingsStore';
 
 const { Text } = Typography;
 
@@ -8,8 +8,16 @@ interface SettingsPanelProps {
   onClose: () => void;
 }
 
+const axisScaleOptions = [
+  { value: 'linear', label: 'Linear' },
+  { value: 'log', label: 'Logarithmic (base 10)' },
+];
+
 export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
-  const { theme, fontSize, setTheme, setFontSize } = useSettingsStore();
+  const {
+    theme, fontSize, xAxisScale, yAxisScale,
+    setTheme, setFontSize, setXAxisScale, setYAxisScale,
+  } = useSettingsStore();
 
   return (
     <Drawer
@@ -55,6 +63,32 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           <Text type="secondary" style={{ fontSize: 12 }}>
             Current: {fontSize}px
           </Text>
+        </div>
+
+        <Divider />
+
+        <div>
+          <Text strong>X-Axis Scale</Text>
+          <div style={{ marginTop: 8 }}>
+            <Select
+              value={xAxisScale}
+              onChange={(value: AxisScale) => setXAxisScale(value)}
+              options={axisScaleOptions}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <Text strong>Y-Axis Scale</Text>
+          <div style={{ marginTop: 8 }}>
+            <Select
+              value={yAxisScale}
+              onChange={(value: AxisScale) => setYAxisScale(value)}
+              options={axisScaleOptions}
+              style={{ width: '100%' }}
+            />
+          </div>
         </div>
       </Space>
     </Drawer>
