@@ -17,6 +17,7 @@ export function parseSpFile(filename: string, content: string): ParsedFile {
   const portMatch = filename.match(/\.s(\d+)p$/i);
   const numPorts = portMatch ? parseInt(portMatch[1], 10) : 2;
   const numParams = numPorts * numPorts;
+  const tokensPerFreq = 1 + numParams * 2; // 频率 + S参数实虚部
 
   // 解析 # 行：格式定义
   let freqUnit = 'HZ';
@@ -49,24 +50,19 @@ export function parseSpFile(filename: string, content: string): ParsedFile {
     }
   }
 
-  // 合并续行（以数字开头但不包含足够数据的行）
+  // 合并续行：当 token 数量不足时继续合并
   const mergedBlocks: string[] = [];
-  let currentBlock = '';
+  let currentTokens: string[] = [];
 
   for (const line of dataLines) {
-    // 如果行以数字或负号开头，可能是新频率点的数据行
-    if (/^[\d.\-+]/.test(line)) {
-      if (currentBlock) {
-        mergedBlocks.push(currentBlock);
-      }
-      currentBlock = line;
-    } else {
-      // 续行
-      currentBlock += ' ' + line;
+    const tokens = line.split(/\s+/);
+    currentTokens.push(...tokens);
+
+    // 当 token 数量足够时，形成一个 block
+    while (currentTokens.length >= tokensPerFreq) {
+      mergedBlocks.push(currentTokens.slice(0, tokensPerFreq).join(' '));
+      currentTokens = currentTokens.slice(tokensPerFreq);
     }
-  }
-  if (currentBlock) {
-    mergedBlocks.push(currentBlock);
   }
 
   // 解析数据
@@ -75,7 +71,7 @@ export function parseSpFile(filename: string, content: string): ParsedFile {
 
   for (const block of mergedBlocks) {
     const tokens = block.trim().split(/\s+/).map(Number);
-    if (tokens.length < 1 + numParams * 2) continue;
+    if (tokens.length < tokensPerFreq) continue;
 
     const freq = tokens[0];
     frequencies.push(freq);
