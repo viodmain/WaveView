@@ -5,6 +5,9 @@
 ### 改进
 
 - **移除默认菜单栏** — 隐藏 Electron 默认的 File/Edit/Window/Help 菜单
+- **自定义滚动条** — 滚动条样式与界面风格统一（8px 宽，圆角，主题色）
+
+- **移除默认菜单栏** — 隐藏 Electron 默认的 File/Edit/Window/Help 菜单
 
 ---
 
