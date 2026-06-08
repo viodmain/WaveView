@@ -1,4 +1,4 @@
-import { Drawer, Switch, Slider, Space, Typography, Divider, Select } from 'antd';
+import { Drawer, Switch, Slider, Space, Typography, Divider, Select, InputNumber } from 'antd';
 import { useSettingsStore, type AxisScale } from '../../stores/settingsStore';
 
 const { Text } = Typography;
@@ -15,8 +15,8 @@ const axisScaleOptions = [
 
 export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const {
-    theme, fontSize, xAxisScale, yAxisScale,
-    setTheme, setFontSize, setXAxisScale, setYAxisScale,
+    theme, fontSize, xAxisScale, yAxisScale, downsampleEnabled, downsampleThreshold,
+    setTheme, setFontSize, setXAxisScale, setYAxisScale, setDownsampleEnabled, setDownsampleThreshold,
   } = useSettingsStore();
 
   return (
@@ -89,6 +89,40 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               style={{ width: '100%' }}
             />
           </div>
+        </div>
+
+        <Divider />
+
+        <div>
+          <Text strong>Downsampling</Text>
+          <div style={{ marginTop: 8 }}>
+            <Space>
+              <Text>Disabled</Text>
+              <Switch
+                checked={downsampleEnabled}
+                onChange={setDownsampleEnabled}
+              />
+              <Text>Enabled</Text>
+            </Space>
+          </div>
+          {downsampleEnabled && (
+            <div style={{ marginTop: 8 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>Threshold (points):</Text>
+              <InputNumber
+                value={downsampleThreshold}
+                onChange={(v) => v && setDownsampleThreshold(v)}
+                min={1000}
+                max={50000}
+                step={1000}
+                style={{ width: '100%', marginTop: 4 }}
+              />
+            </div>
+          )}
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+            {downsampleEnabled
+              ? `Auto downsample when data exceeds ${downsampleThreshold} points`
+              : 'All data points will be rendered (may be slow for large files)'}
+          </Text>
         </div>
       </Space>
     </Drawer>

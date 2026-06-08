@@ -52,6 +52,8 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
   const theme = useSettingsStore((s) => s.theme);
   const xAxisScale = useSettingsStore((s) => s.xAxisScale);
   const yAxisScale = useSettingsStore((s) => s.yAxisScale);
+  const downsampleEnabled = useSettingsStore((s) => s.downsampleEnabled);
+  const downsampleThreshold = useSettingsStore((s) => s.downsampleThreshold);
 
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
@@ -221,8 +223,10 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             yArr = filtered.y;
           }
 
-          // 降采样：超过 5000 点时自动降采样
-          const [dsX, dsY] = autoDownsample(xArr, yArr, 5000);
+          // 降采样：根据设置决定是否降采样
+          const [dsX, dsY] = downsampleEnabled
+            ? autoDownsample(xArr, yArr, downsampleThreshold)
+            : [xArr, yArr];
 
           return {
             name: s.name,
@@ -247,7 +251,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     }
 
     return () => clearTimeout(timer);
-  }, [series, isZoomMode, theme, xAxisScale, yAxisScale]);
+  }, [series, isZoomMode, theme, xAxisScale, yAxisScale, downsampleEnabled, downsampleThreshold]);
 
   return (
     <div
