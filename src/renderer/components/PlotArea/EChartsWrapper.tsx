@@ -10,6 +10,7 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { autoDownsample } from '../../utils/downsample';
 
 echarts.use([LineChart, GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, ToolboxComponent, CanvasRenderer]);
 
@@ -201,19 +202,34 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         ],
         series: series.map((s) => {
           // 对数轴时过滤掉无效数据点（0 或负值）
-          let data = s.xData.map((x, i) => [x, s.yData[i]]);
+          let xArr = s.xData;
+          let yArr = s.yData;
           if (isXLog) {
-            data = data.filter(([x]) => x > 0);
+            const filtered = xArr.reduce((acc, x, i) => {
+              if (x > 0) { acc.x.push(x); acc.y.push(yArr[i]); }
+              return acc;
+            }, { x: [] as number[], y: [] as number[] });
+            xArr = filtered.x;
+            yArr = filtered.y;
           }
           if (isYLog) {
-            data = data.filter(([_, y]) => y > 0);
+            const filtered = xArr.reduce((acc, x, i) => {
+              if (yArr[i] > 0) { acc.x.push(x); acc.y.push(yArr[i]); }
+              return acc;
+            }, { x: [] as number[], y: [] as number[] });
+            xArr = filtered.x;
+            yArr = filtered.y;
           }
+
+          // 降采样：超过 5000 点时自动降采样
+          const [dsX, dsY] = autoDownsample(xArr, yArr, 5000);
+
           return {
             name: s.name,
             type: 'line' as const,
             showSymbol: false,
             lineStyle: { width: 1.5 },
-            data,
+            data: dsX.map((x, i) => [x, dsY[i]]),
           };
         }),
       };
