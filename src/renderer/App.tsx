@@ -8,7 +8,6 @@ import SettingsPanel from './components/Settings/SettingsPanel';
 import { useFileStore } from './stores/fileStore';
 import { useWindowStore } from './stores/windowStore';
 import { useSettingsStore } from './stores/settingsStore';
-import { parseFile } from './parsers/parserFactory';
 import type { EChartsHandle } from './components/PlotArea/EChartsWrapper';
 import './styles/global.css';
 
@@ -53,6 +52,30 @@ export default function App() {
     document.addEventListener('mouseup', handleMouseUp);
   }, [sidebarWidth]);
 
+  // 使用 Worker 解析文件
+  const parseFileWithWorker = useCallback((filename: string, content: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(
+        new URL('./workers/parseWorker.ts', import.meta.url),
+        { type: 'module' }
+      );
+
+      worker.onmessage = (e) => {
+        const { success, result, error } = e.data;
+        worker.terminate();
+        if (success) resolve(result);
+        else reject(new Error(error));
+      };
+
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(new Error(err.message));
+      };
+
+      worker.postMessage({ filename, content });
+    });
+  }, []);
+
   const handleOpenFile = useCallback(async () => {
     try {
       const filePaths = await window.electronAPI.openFileDialog();
@@ -66,7 +89,7 @@ export default function App() {
         }
 
         try {
-          const parsed = parseFile(result.filename!, result.content!);
+          const parsed = await parseFileWithWorker(result.filename!, result.content!);
           addFile(parsed);
           messageApi.success(`Imported: ${result.filename}`);
         } catch (err) {
@@ -76,7 +99,7 @@ export default function App() {
     } catch (err) {
       messageApi.error(`Operation failed: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [addFile, messageApi]);
+  }, [addFile, messageApi, parseFileWithWorker]);
 
   const handleZoom = useCallback(() => {
     chartRef.current?.startDataZoom();
@@ -100,7 +123,6 @@ export default function App() {
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+O 打开文件
       if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
         e.preventDefault();
         handleOpenFile();
@@ -110,7 +132,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleOpenFile]);
 
-  // 根据设置选择主题算法
   const themeAlgorithm = settingsStore.theme === 'light' ? theme.defaultAlgorithm : theme.darkAlgorithm;
 
   return (
