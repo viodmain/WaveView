@@ -16,6 +16,51 @@ export interface EyeDiagramData {
 }
 
 /**
+ * 自动计算位周期
+ *
+ * 通过检测信号的过零点来估算位周期。
+ * 假设信号在均值附近上下摆动。
+ *
+ * @param xData 时间轴数据
+ * @param yData 信号数据
+ * @returns 估算的位周期（秒），如果无法估算返回 0
+ */
+export function autoDetectBitPeriod(xData: number[], yData: number[]): number {
+  if (xData.length < 10) return 0;
+
+  // 计算信号均值
+  const mean = yData.reduce((sum, y) => sum + y, 0) / yData.length;
+
+  // 检测过零点（信号从低于均值变为高于均值，或反之）
+  const crossings: number[] = [];
+  for (let i = 1; i < yData.length; i++) {
+    const prev = yData[i - 1] - mean;
+    const curr = yData[i] - mean;
+    if ((prev < 0 && curr >= 0) || (prev >= 0 && curr < 0)) {
+      // 线性插值找到精确的过零点时间
+      const ratio = Math.abs(prev) / (Math.abs(prev) + Math.abs(curr));
+      const t = xData[i - 1] + ratio * (xData[i] - xData[i - 1]);
+      crossings.push(t);
+    }
+  }
+
+  if (crossings.length < 2) return 0;
+
+  // 计算相邻过零点的时间间隔
+  const intervals: number[] = [];
+  for (let i = 1; i < crossings.length; i++) {
+    intervals.push(crossings[i] - crossings[i - 1]);
+  }
+
+  // 使用中位数作为位周期（更鲁棒）
+  intervals.sort((a, b) => a - b);
+  const medianInterval = intervals[Math.floor(intervals.length / 2)];
+
+  // 位周期通常是过零点间隔的 2 倍（一个周期包含两个过零点）
+  return medianInterval * 2;
+}
+
+/**
  * 生成眼图数据
  *
  * @param xData 时间轴数据

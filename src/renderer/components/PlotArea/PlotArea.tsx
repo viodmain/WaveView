@@ -1,10 +1,19 @@
-import { useRef, useMemo, useState } from 'react';
-import { message, Button, InputNumber, Space, Tooltip } from 'antd';
-import { EyeOutlined, LineChartOutlined } from '@ant-design/icons';
+import { useRef, useMemo, useState, useCallback } from 'react';
+import { message, Button, InputNumber, Space, Tooltip, Select } from 'antd';
+import { EyeOutlined, LineChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import EChartsWrapper, { type EChartsHandle } from './EChartsWrapper';
 import EyeChart from './EyeChart';
 import { useFileStore } from '../../stores/fileStore';
 import { useWindowStore } from '../../stores/windowStore';
+import { autoDetectBitPeriod } from '../../utils/eyeDiagram';
+
+const timeUnitOptions = [
+  { value: 1e-12, label: 'ps' },
+  { value: 1e-9, label: 'ns' },
+  { value: 1e-6, label: 'us' },
+  { value: 1e-3, label: 'ms' },
+  { value: 1, label: 's' },
+];
 
 interface PlotAreaProps {
   onChartRef?: (ref: EChartsHandle | null) => void;
@@ -19,7 +28,11 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
 
   // 眼图状态
   const [eyeMode, setEyeMode] = useState(false);
-  const [bitPeriod, setBitPeriod] = useState(1e-6); // 默认 1us
+  const [bitPeriodValue, setBitPeriodValue] = useState(1); // 数值
+  const [bitPeriodUnit, setBitPeriodUnit] = useState(1e-6); // 单位（秒）
+
+  // 计算实际的 bit period（秒）
+  const bitPeriod = bitPeriodValue * bitPeriodUnit;
 
   // 获取当前活跃窗口
   const activeWindow = windows.find((w) => w.id === activeWindowId);
@@ -67,6 +80,23 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
     setEyeMode(!eyeMode);
   };
 
+  // 自动计算位周期
+  const handleAutoDetect = useCallback(() => {
+    if (series.length === 0) return;
+    const detected = autoDetectBitPeriod(series[0].xData, series[0].yData);
+    if (detected > 0) {
+      // 自动选择合适的单位
+      if (detected >= 1) { setBitPeriodValue(detected); setBitPeriodUnit(1); }
+      else if (detected >= 1e-3) { setBitPeriodValue(detected * 1e3); setBitPeriodUnit(1e-3); }
+      else if (detected >= 1e-6) { setBitPeriodValue(detected * 1e6); setBitPeriodUnit(1e-6); }
+      else if (detected >= 1e-9) { setBitPeriodValue(detected * 1e9); setBitPeriodUnit(1e-9); }
+      else { setBitPeriodValue(detected * 1e12); setBitPeriodUnit(1e-12); }
+      messageApi.success(`Detected bit period: ${detected.toPrecision(4)} s`);
+    } else {
+      messageApi.warning('Could not detect bit period, please enter manually');
+    }
+  }, [series, messageApi]);
+
   return (
     <div
       style={{
@@ -101,30 +131,28 @@ export default function PlotArea({ onChartRef }: PlotAreaProps) {
             <Space size={4}>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Bit Period:</span>
               <InputNumber
-                value={bitPeriod}
-                onChange={(v) => v && setBitPeriod(v)}
-                min={1e-12}
-                max={1}
-                step={1e-6}
+                value={bitPeriodValue}
+                onChange={(v) => v && setBitPeriodValue(v)}
+                min={0.01}
+                max={1000}
+                step={1}
                 size="small"
-                style={{ width: 120 }}
-                formatter={(value) => {
-                  if (!value) return '';
-                  if (value >= 1e-3) return `${(value * 1e3).toFixed(2)} ms`;
-                  if (value >= 1e-6) return `${(value * 1e6).toFixed(2)} us`;
-                  if (value >= 1e-9) return `${(value * 1e9).toFixed(2)} ns`;
-                  return `${(value * 1e12).toFixed(2)} ps`;
-                }}
-                parser={(text) => {
-                  if (!text) return 1e-6;
-                  const num = parseFloat(text);
-                  if (text.includes('ms')) return num * 1e-3;
-                  if (text.includes('us')) return num * 1e-6;
-                  if (text.includes('ns')) return num * 1e-9;
-                  if (text.includes('ps')) return num * 1e-12;
-                  return num;
-                }}
+                style={{ width: 80 }}
               />
+              <Select
+                value={bitPeriodUnit}
+                onChange={setBitPeriodUnit}
+                options={timeUnitOptions}
+                size="small"
+                style={{ width: 60 }}
+              />
+              <Tooltip title="Auto Detect">
+                <Button
+                  size="small"
+                  icon={<ThunderboltOutlined />}
+                  onClick={handleAutoDetect}
+                />
+              </Tooltip>
             </Space>
           )}
           {eyeMode && series.length > 0 && (
