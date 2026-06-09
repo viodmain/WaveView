@@ -161,7 +161,8 @@ export function generateEyeDiagram(
 
   // 切分并叠加
   const traces: Array<{ x: number[]; y: number[] }> = [];
-  const phaseX: number[] = Array.from({ length: samplesPerTrace }, (_, i) => i / samplesPerUI);
+  // X 轴为实际时间（0 到 2*bitPeriod）
+  const phaseX: number[] = Array.from({ length: samplesPerTrace }, (_, i) => i * dt);
 
   for (let p = 0; p < periodsToUse; p++) {
     const startIdx = p * samplesPerUI;

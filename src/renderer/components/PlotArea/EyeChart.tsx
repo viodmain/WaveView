@@ -98,15 +98,20 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
         },
         xAxis: {
           type: 'value',
-          name: 'UI (Unit Interval)',
+          name: 'Time (s)',
           nameTextStyle: { color: secondaryColor },
           axisLabel: {
             color: secondaryColor,
-            formatter: (value: number) => value.toFixed(1),
+            formatter: (value: number) => {
+              if (value >= 1e-3) return `${(value * 1e3).toFixed(2)} ms`;
+              if (value >= 1e-6) return `${(value * 1e6).toFixed(2)} us`;
+              if (value >= 1e-9) return `${(value * 1e9).toFixed(2)} ns`;
+              return `${(value * 1e12).toFixed(2)} ps`;
+            },
           },
           splitLine: { lineStyle: { color: borderColor } },
           min: 0,
-          max: 2,
+          max: bitPeriod * 2,
         },
         yAxis: {
           type: 'value',
