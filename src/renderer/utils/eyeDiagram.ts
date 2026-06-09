@@ -108,33 +108,10 @@ function autoDetectBitPeriodByCrossing(xData: number[], yData: number[]): number
 }
 
 /**
- * 找到第一个上升沿的位置（相位对齐）
- */
-function findFirstRisingEdge(xData: number[], yData: number[]): number {
-  if (yData.length < 10) return 0;
-
-  const mean = yData.reduce((sum, y) => sum + y, 0) / yData.length;
-
-  // 找到第一个从低于均值到高于均值的跳变
-  for (let i = 1; i < yData.length; i++) {
-    const prev = yData[i - 1] - mean;
-    const curr = yData[i] - mean;
-    if (prev < 0 && curr >= 0) {
-      // 线性插值找到精确的过零点时间
-      const ratio = Math.abs(prev) / (Math.abs(prev) + Math.abs(curr));
-      return xData[i - 1] + ratio * (xData[i] - xData[i - 1]);
-    }
-  }
-
-  return xData[0];
-}
-
-/**
  * 生成眼图数据
  *
- * 标准眼图：每个 trace 跨越 2 个 UI，X 轴范围 [0, 2*bitPeriod]
+ * 标准眼图：每个 trace 跨越 2 个 UI，X 轴范围 [0, 2]
  * 相邻 trace 之间偏移 1 个 UI，形成叠加效果。
- * 自动对齐到第一个上升沿，使眼图居中。
  *
  * @param xData 时间轴数据
  * @param yData 信号数据
@@ -152,11 +129,8 @@ export function generateEyeDiagram(
     return { traces: [], metrics: { eyeHeight: 0, eyeWidth: 0, numTraces: 0 } };
   }
 
-  // 相位对齐：找到第一个上升沿
-  const phaseOffset = findFirstRisingEdge(xData, yData);
-
-  // 计算时间范围（从对齐后的位置开始）
-  const tMin = phaseOffset;
+  // 计算时间范围
+  const tMin = xData[0];
   const tMax = xData[xData.length - 1];
   const totalTime = tMax - tMin;
 
@@ -187,8 +161,7 @@ export function generateEyeDiagram(
 
   // 切分并叠加
   const traces: Array<{ x: number[]; y: number[] }> = [];
-  // X 轴为实际时间（0 到 2*bitPeriod）
-  const phaseX: number[] = Array.from({ length: samplesPerTrace }, (_, i) => i * dt);
+  const phaseX: number[] = Array.from({ length: samplesPerTrace }, (_, i) => i / samplesPerUI);
 
   for (let p = 0; p < periodsToUse; p++) {
     const startIdx = p * samplesPerUI;

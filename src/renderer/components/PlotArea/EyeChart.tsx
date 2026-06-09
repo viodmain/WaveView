@@ -71,15 +71,6 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
       // 生成颜色渐变（从蓝到红）
       const colors = generateColors(eyeData.traces.length);
 
-      // 根据时间范围自动选择单位
-      const maxTime = bitPeriod * 2;
-      let timeUnit = 's';
-      let timeScale = 1;
-      if (maxTime < 1e-9) { timeUnit = 'ps'; timeScale = 1e12; }
-      else if (maxTime < 1e-6) { timeUnit = 'ns'; timeScale = 1e9; }
-      else if (maxTime < 1e-3) { timeUnit = 'us'; timeScale = 1e6; }
-      else if (maxTime < 1) { timeUnit = 'ms'; timeScale = 1e3; }
-
       const option: echarts.EChartsCoreOption = {
         backgroundColor: bgColor,
         textStyle: { color: textColor },
@@ -93,7 +84,7 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
           formatter: (params: any) => {
             if (!Array.isArray(params) || params.length === 0) return '';
             const x = params[0]?.value?.[0];
-            return `<div>${(x * timeScale).toFixed(3)} ${timeUnit}</div>`;
+            return `<div>${x.toFixed(3)} UI</div>`;
           },
         },
         legend: {
@@ -107,15 +98,15 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
         },
         xAxis: {
           type: 'value',
-          name: `Time (${timeUnit})`,
+          name: 'UI (Unit Interval)',
           nameTextStyle: { color: secondaryColor },
           axisLabel: {
             color: secondaryColor,
-            formatter: (value: number) => (value * timeScale).toFixed(2),
+            formatter: (value: number) => value.toFixed(1),
           },
           splitLine: { lineStyle: { color: borderColor } },
           min: 0,
-          max: maxTime,
+          max: 2,
         },
         yAxis: {
           type: 'value',
