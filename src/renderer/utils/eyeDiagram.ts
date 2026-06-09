@@ -2,6 +2,7 @@
  * 眼图 (Eye Diagram) 数据处理
  *
  * 将数字信号按位周期切分，然后叠加显示。
+ * 标准眼图长度为 2 个 UI (Unit Interval)。
  */
 
 export interface EyeDiagramData {
@@ -19,7 +20,6 @@ export interface EyeDiagramData {
  * 自动计算位周期
  *
  * 通过检测信号的过零点来估算位周期。
- * 假设信号在均值附近上下摆动。
  *
  * @param xData 时间轴数据
  * @param yData 信号数据
@@ -63,9 +63,12 @@ export function autoDetectBitPeriod(xData: number[], yData: number[]): number {
 /**
  * 生成眼图数据
  *
+ * 标准眼图：每个 trace 跨越 2 个 UI，X 轴范围 [0, 2]
+ * 相邻 trace 之间偏移 1 个 UI，形成叠加效果。
+ *
  * @param xData 时间轴数据
  * @param yData 信号数据
- * @param bitPeriod 位周期（秒）
+ * @param bitPeriod 位周期 / UI（秒）
  * @param numPeriods 叠加的周期数量（0 = 全部）
  * @returns 眼图数据
  */
@@ -84,38 +87,39 @@ export function generateEyeDiagram(
   const tMax = xData[xData.length - 1];
   const totalTime = tMax - tMin;
 
-  // 计算完整的周期数
-  const totalPeriods = Math.floor(totalTime / bitPeriod);
+  // 计算完整的周期数（每个 trace 跨越 2 个 UI，偏移 1 个 UI）
+  const totalPeriods = Math.floor(totalTime / bitPeriod) - 1; // -1 因为每个 trace 需要 2 个 UI
   const periodsToUse = numPeriods > 0 ? Math.min(numPeriods, totalPeriods) : totalPeriods;
 
   if (periodsToUse <= 0) {
     return { traces: [], metrics: { eyeHeight: 0, eyeWidth: 0, numTraces: 0 } };
   }
 
-  // 对数据进行插值，确保每个周期有相同的采样点数
-  const samplesPerPeriod = Math.max(100, Math.round((xData.length / totalPeriods) * 2));
-  const dt = bitPeriod / samplesPerPeriod;
+  // 对数据进行插值，确保每个 UI 有相同的采样点数
+  const samplesPerUI = 200; // 每个 UI 200 个采样点
+  const samplesPerTrace = samplesPerUI * 2; // 每个 trace 2 个 UI
+  const dt = bitPeriod / samplesPerUI;
 
-  // 生成插值后的时间和信号值
+  // 生成插值后的时间和信号值（覆盖所有需要的数据范围）
+  const totalSamples = samplesPerUI * (periodsToUse + 1);
   const interpolatedX: number[] = [];
   const interpolatedY: number[] = [];
 
-  for (let i = 0; i < samplesPerPeriod * periodsToUse; i++) {
+  for (let i = 0; i < totalSamples; i++) {
     const t = tMin + i * dt;
     interpolatedX.push(t);
-
-    // 线性插值获取信号值
     const y = interpolate(xData, yData, t);
     interpolatedY.push(y);
   }
 
   // 切分并叠加
   const traces: Array<{ x: number[]; y: number[] }> = [];
-  const phaseX: number[] = Array.from({ length: samplesPerPeriod }, (_, i) => i * dt / bitPeriod);
+  // X 轴归一化到 [0, 2]，表示 2 个 UI
+  const phaseX: number[] = Array.from({ length: samplesPerTrace }, (_, i) => i / samplesPerUI);
 
   for (let p = 0; p < periodsToUse; p++) {
-    const startIdx = p * samplesPerPeriod;
-    const endIdx = startIdx + samplesPerPeriod;
+    const startIdx = p * samplesPerUI;
+    const endIdx = startIdx + samplesPerTrace;
 
     if (endIdx > interpolatedY.length) break;
 
@@ -157,6 +161,8 @@ function interpolate(xData: number[], yData: number[], t: number): number {
 
 /**
  * 计算眼图参数（眼高、眼宽）
+ *
+ * 眼图中心在 1.0 UI 处（2 个 UI 的中间）
  */
 function calculateEyeMetrics(traces: Array<{ x: number[]; y: number[] }>): {
   eyeHeight: number;
@@ -170,7 +176,7 @@ function calculateEyeMetrics(traces: Array<{ x: number[]; y: number[] }>): {
   const numTraces = traces.length;
   const numPoints = traces[0].x.length;
 
-  // 找到眼图张开最大的位置（通常在 0.5 位周期处）
+  // 眼图中心在 1.0 UI 处（2 个 UI 的中间）
   const centerIdx = Math.floor(numPoints * 0.5);
 
   // 计算眼高：在中心位置，所有曲线的最大值和最小值之差
@@ -184,7 +190,7 @@ function calculateEyeMetrics(traces: Array<{ x: number[]; y: number[] }>): {
   }
   const eyeHeight = yMax - yMin;
 
-  // 计算眼宽：简化计算，使用 0.5 眼高处的宽度
+  // 计算眼宽：使用 0.5 眼高处的宽度
   const yMid = (yMin + yMax) / 2;
   let leftEdge = 0;
   let rightEdge = numPoints - 1;
@@ -207,7 +213,8 @@ function calculateEyeMetrics(traces: Array<{ x: number[]; y: number[] }>): {
     }
   }
 
-  const eyeWidth = (rightEdge - leftEdge) / numPoints;
+  // 眼宽归一化到 UI 单位
+  const eyeWidth = (rightEdge - leftEdge) / numPoints * 2; // ×2 因为总范围是 2 UI
 
   return { eyeHeight, eyeWidth, numTraces };
 }

@@ -84,7 +84,7 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
           formatter: (params: any) => {
             if (!Array.isArray(params) || params.length === 0) return '';
             const x = params[0]?.value?.[0];
-            return `<div>Phase: ${(x * 100).toFixed(1)}%</div>`;
+            return `<div>${x.toFixed(3)} UI</div>`;
           },
         },
         legend: {
@@ -98,15 +98,15 @@ export default function EyeChart({ name, xData, yData, bitPeriod, style }: EyeCh
         },
         xAxis: {
           type: 'value',
-          name: 'Phase',
+          name: 'UI (Unit Interval)',
           nameTextStyle: { color: secondaryColor },
           axisLabel: {
             color: secondaryColor,
-            formatter: (value: number) => `${(value * 100).toFixed(0)}%`,
+            formatter: (value: number) => value.toFixed(1),
           },
           splitLine: { lineStyle: { color: borderColor } },
           min: 0,
-          max: 1,
+          max: 2,
         },
         yAxis: {
           type: 'value',
