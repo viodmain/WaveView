@@ -1,23 +1,21 @@
 import { Button, Tooltip, Space } from 'antd';
 import {
   FolderOpenOutlined,
-  DragOutlined,
+  ArrowsAltOutlined,
   CompressOutlined,
   PlusSquareOutlined,
   SettingOutlined,
-  ArrowsAltOutlined,
 } from '@ant-design/icons';
 
 interface WorkbenchProps {
   onOpenFile?: () => void;
   onZoom?: () => void;
-  onPan?: () => void;
   onReset?: () => void;
   onNewWindow?: () => void;
   onOpenSettings?: () => void;
 }
 
-export default function Workbench({ onOpenFile, onZoom, onPan, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
+export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
   return (
     <div
       style={{
@@ -44,16 +42,8 @@ export default function Workbench({ onOpenFile, onZoom, onPan, onReset, onNewWin
           <Button
             type="text"
             size="small"
-            icon={<DragOutlined />}
-            onClick={onZoom}
-          />
-        </Tooltip>
-        <Tooltip title="Pan (Move)">
-          <Button
-            type="text"
-            size="small"
             icon={<ArrowsAltOutlined />}
-            onClick={onPan}
+            onClick={onZoom}
           />
         </Tooltip>
         <Tooltip title="Reset">
@@ -83,7 +73,7 @@ export default function Workbench({ onOpenFile, onZoom, onPan, onReset, onNewWin
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.1.21
+        WaveView v1.1.20
       </span>
     </div>
   );
