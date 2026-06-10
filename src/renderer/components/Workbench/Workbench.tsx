@@ -1,7 +1,7 @@
 import { Button, Tooltip, Space } from 'antd';
 import {
   FolderOpenOutlined,
-  ArrowsAltOutlined,
+  DragOutlined,
   CompressOutlined,
   PlusSquareOutlined,
   SettingOutlined,
@@ -9,13 +9,14 @@ import {
 
 interface WorkbenchProps {
   onOpenFile?: () => void;
-  onZoom?: () => void;
+  onPan?: () => void;
   onReset?: () => void;
   onNewWindow?: () => void;
   onOpenSettings?: () => void;
+  isPanMode?: boolean;
 }
 
-export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
+export default function Workbench({ onOpenFile, onPan, onReset, onNewWindow, onOpenSettings, isPanMode }: WorkbenchProps) {
   return (
     <div
       style={{
@@ -38,12 +39,12 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, on
             onClick={onOpenFile}
           />
         </Tooltip>
-        <Tooltip title="Zoom (Box select)">
+        <Tooltip title="Pan (Drag to move)">
           <Button
-            type="text"
+            type={isPanMode ? 'primary' : 'text'}
             size="small"
-            icon={<ArrowsAltOutlined />}
-            onClick={onZoom}
+            icon={<DragOutlined />}
+            onClick={onPan}
           />
         </Tooltip>
         <Tooltip title="Reset">
@@ -73,7 +74,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, on
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.1.20
+        WaveView v1.1.21
       </span>
     </div>
   );

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.21] - 2026-06-10
+
+### 重构
+
+- **Zoom 使用 ECharts toolbox 原生按钮** — 移除 Workbench 上的 Zoom 按钮，直接使用图表右上角的 toolbox
+- **Pan 按钮** — Workbench 添加 Pan 按钮，点击切换平移模式（高亮状态）
+- **Pan/Zoom 互斥** — 点击 Pan 自动退出 toolbox 的框选模式
+
+---
+
 ## [1.1.21] - 2026-06-09
 
 ### 新增功能

@@ -14,6 +14,7 @@ import './styles/global.css';
 export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isPanMode, setIsPanMode] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const isResizing = useRef(false);
   const startX = useRef(0);
@@ -101,12 +102,18 @@ export default function App() {
     }
   }, [addFile, messageApi, parseFileWithWorker]);
 
-  const handleZoom = useCallback(() => {
-    chartRef.current?.startDataZoom();
-    messageApi.info('Box zoom enabled, drag on chart to select area');
-  }, [messageApi]);
+  // Pan 模式切换
+  const handlePan = useCallback(() => {
+    const newPanMode = !isPanMode;
+    setIsPanMode(newPanMode);
+    chartRef.current?.setPanMode(newPanMode);
+    messageApi.info(newPanMode ? 'Pan mode enabled, drag to move' : 'Pan mode disabled');
+  }, [isPanMode, messageApi]);
 
-  const handleResetZoom = useCallback(() => {
+  // Reset：退出 Pan 模式 + 重置缩放
+  const handleReset = useCallback(() => {
+    setIsPanMode(false);
+    chartRef.current?.setPanMode(false);
     chartRef.current?.resetZoom();
     messageApi.info('View reset');
   }, [messageApi]);
@@ -149,10 +156,11 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <Workbench
           onOpenFile={handleOpenFile}
-          onZoom={handleZoom}
-          onReset={handleResetZoom}
+          onPan={handlePan}
+          onReset={handleReset}
           onNewWindow={handleNewWindow}
           onOpenSettings={handleOpenSettings}
+          isPanMode={isPanMode}
         />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <div style={{ width: sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>

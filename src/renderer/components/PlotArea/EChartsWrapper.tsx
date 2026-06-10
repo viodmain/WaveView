@@ -23,7 +23,7 @@ export interface SeriesData {
 
 export interface EChartsHandle {
   resetZoom: () => void;
-  startDataZoom: () => void;
+  setPanMode: (enabled: boolean) => void;
 }
 
 interface EChartsWrapperProps {
@@ -48,7 +48,7 @@ function getCssVar(name: string): string {
 const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series, style }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
-  const [isZoomMode, setIsZoomMode] = useState(false);
+  const [isPanMode, setIsPanMode] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
   const xAxisScale = useSettingsStore((s) => s.xAxisScale);
   const yAxisScale = useSettingsStore((s) => s.yAxisScale);
@@ -60,19 +60,17 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
     resetZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
-      chart.dispatchAction({
-        type: 'restore',
-      });
-      setIsZoomMode(false);
+      chart.dispatchAction({ type: 'restore' });
     },
-    startDataZoom: () => {
+    setPanMode: (enabled: boolean) => {
+      setIsPanMode(enabled);
       const chart = chartRef.current;
       if (!chart) return;
-      setIsZoomMode(true);
+      // 退出 toolbox 的框选模式
       chart.dispatchAction({
         type: 'takeGlobalCursor',
         key: 'dataZoomSelect',
-        dataZoomSelectActive: true,
+        dataZoomSelectActive: false,
       });
     },
   }));
@@ -103,9 +101,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       return;
     }
 
-    // 延迟执行，确保 CSS 变量已经更新
     const timer = setTimeout(() => {
-      // 根据主题获取颜色
       const bgColor = getCssVar('--bg-base') || '#1e1e1e';
       const textColor = getCssVar('--text-primary') || '#cccccc';
       const secondaryColor = getCssVar('--text-secondary') || '#969696';
@@ -113,8 +109,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
 
       const xUnit = series[0]?.unit.x ?? '';
       const yUnit = series[0]?.unit.y ?? '';
-
-      // 判断是否使用对数轴
       const isXLog = xAxisScale === 'log';
       const isYLog = yAxisScale === 'log';
 
@@ -144,18 +138,10 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           feature: {
             dataZoom: {
               yAxisIndex: 'none',
-              title: {
-                zoom: 'Box Zoom',
-                back: 'Restore',
-              },
+              title: { zoom: 'Zoom', back: 'Restore' },
             },
-            restore: {
-              title: 'Restore',
-            },
-            saveAsImage: {
-              title: 'Save',
-              pixelRatio: 2,
-            },
+            restore: { title: 'Restore' },
+            saveAsImage: { title: 'Save', pixelRatio: 2 },
           },
         },
         grid: {
@@ -189,7 +175,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             type: 'inside',
             xAxisIndex: 0,
             zoomOnMouseWheel: 'ctrl',
-            moveOnMouseMove: false,
+            moveOnMouseMove: isPanMode,
             moveOnMouseWheel: false,
             preventDefaultMouseMove: true,
             filterMode: 'none',
@@ -205,7 +191,6 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
           },
         ],
         series: series.map((s) => {
-          // 对数轴时过滤掉无效数据点（0 或负值）
           let xArr = s.xData;
           let yArr = s.yData;
           if (isXLog) {
@@ -224,12 +209,9 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             xArr = filtered.x;
             yArr = filtered.y;
           }
-
-          // 降采样：根据设置决定是否降采样
           const [dsX, dsY] = downsampleEnabled
             ? autoDownsample(xArr, yArr, downsampleThreshold)
             : [xArr, yArr];
-
           return {
             name: s.name,
             type: 'line' as const,
@@ -243,17 +225,8 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
       chart.setOption(option, true);
     }, 50);
 
-    // 如果是框选模式，重新激活
-    if (isZoomMode) {
-      chart.dispatchAction({
-        type: 'takeGlobalCursor',
-        key: 'dataZoomSelect',
-        dataZoomSelectActive: true,
-      });
-    }
-
     return () => clearTimeout(timer);
-  }, [series, isZoomMode, theme, xAxisScale, yAxisScale, downsampleEnabled, downsampleThreshold]);
+  }, [series, isPanMode, theme, xAxisScale, yAxisScale, downsampleEnabled, downsampleThreshold]);
 
   return (
     <div
