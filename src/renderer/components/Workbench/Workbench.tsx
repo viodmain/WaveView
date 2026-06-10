@@ -5,17 +5,19 @@ import {
   CompressOutlined,
   PlusSquareOutlined,
   SettingOutlined,
+  ArrowsAltOutlined,
 } from '@ant-design/icons';
 
 interface WorkbenchProps {
   onOpenFile?: () => void;
   onZoom?: () => void;
+  onPan?: () => void;
   onReset?: () => void;
   onNewWindow?: () => void;
   onOpenSettings?: () => void;
 }
 
-export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
+export default function Workbench({ onOpenFile, onZoom, onPan, onReset, onNewWindow, onOpenSettings }: WorkbenchProps) {
   return (
     <div
       style={{
@@ -46,6 +48,14 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, on
             onClick={onZoom}
           />
         </Tooltip>
+        <Tooltip title="Pan (Move)">
+          <Button
+            type="text"
+            size="small"
+            icon={<ArrowsAltOutlined />}
+            onClick={onPan}
+          />
+        </Tooltip>
         <Tooltip title="Reset">
           <Button
             type="text"
@@ -73,7 +83,7 @@ export default function Workbench({ onOpenFile, onZoom, onReset, onNewWindow, on
       </Space>
       <div style={{ flex: 1 }} />
       <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-        WaveView v1.1.20
+        WaveView v1.1.21
       </span>
     </div>
   );

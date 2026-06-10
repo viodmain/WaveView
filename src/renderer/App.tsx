@@ -106,6 +106,11 @@ export default function App() {
     messageApi.info('Box zoom enabled, drag on chart to select area');
   }, [messageApi]);
 
+  const handlePan = useCallback(() => {
+    chartRef.current?.startPan();
+    messageApi.info('Pan mode enabled, drag to move waveform');
+  }, [messageApi]);
+
   const handleResetZoom = useCallback(() => {
     chartRef.current?.resetZoom();
     messageApi.info('View reset');
@@ -150,6 +155,7 @@ export default function App() {
         <Workbench
           onOpenFile={handleOpenFile}
           onZoom={handleZoom}
+          onPan={handlePan}
           onReset={handleResetZoom}
           onNewWindow={handleNewWindow}
           onOpenSettings={handleOpenSettings}

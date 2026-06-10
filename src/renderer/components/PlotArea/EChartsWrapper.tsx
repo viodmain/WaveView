@@ -24,6 +24,7 @@ export interface SeriesData {
 export interface EChartsHandle {
   resetZoom: () => void;
   startDataZoom: () => void;
+  startPan: () => void;
 }
 
 interface EChartsWrapperProps {
@@ -49,6 +50,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
   const [isZoomMode, setIsZoomMode] = useState(false);
+  const [isPanMode, setIsPanMode] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
   const xAxisScale = useSettingsStore((s) => s.xAxisScale);
   const yAxisScale = useSettingsStore((s) => s.yAxisScale);
@@ -64,15 +66,29 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
         type: 'restore',
       });
       setIsZoomMode(false);
+      setIsPanMode(false);
     },
     startDataZoom: () => {
       const chart = chartRef.current;
       if (!chart) return;
       setIsZoomMode(true);
+      setIsPanMode(false);
       chart.dispatchAction({
         type: 'takeGlobalCursor',
         key: 'dataZoomSelect',
         dataZoomSelectActive: true,
+      });
+    },
+    startPan: () => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      setIsPanMode(true);
+      setIsZoomMode(false);
+      // 退出框选模式
+      chart.dispatchAction({
+        type: 'takeGlobalCursor',
+        key: 'dataZoomSelect',
+        dataZoomSelectActive: false,
       });
     },
   }));
@@ -189,7 +205,7 @@ const EChartsWrapper = forwardRef<EChartsHandle, EChartsWrapperProps>(({ series,
             type: 'inside',
             xAxisIndex: 0,
             zoomOnMouseWheel: 'ctrl',
-            moveOnMouseMove: isZoomMode ? false : 'shift',
+            moveOnMouseMove: isPanMode,
             moveOnMouseWheel: false,
             preventDefaultMouseMove: true,
             filterMode: 'none',
